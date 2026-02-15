@@ -25,9 +25,22 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
 import java.time.format.DateTimeFormatter
-import kotlin.time.Instant
+// import kotlin.time.Instant
+import java.time.Instant
 import java.time.ZoneId
 
+
+
+private val BluePrimary = Color(0xFF1565C0)
+private val BlueLight = Color(0xFFE3F2FD)
+private val BlueSoft = Color(0xFF64B5F6)
+private val BrownPrimary = Color(0xFF6D4C41)
+private val BrownDark = Color(0xFF4E342E)
+private val WhiteSoft = Color(0xFFFAFAFA)
+
+// new
+private val BlueSky = Color(0xFFBED9F4)
+private val YellowLight = Color(0xFFFEFDD0)
 
 
 
@@ -39,43 +52,25 @@ fun HomeScreen() {
     var showAddPostDialog by remember { mutableStateOf(false) }
 
     Scaffold(
-
-        containerColor = Color.White,
+        containerColor = YellowLight,
 
         topBar = {
-
             Surface(
-                color = Color(0xFFE3F2FD), // ฟ้าอ่อน
-                shadowElevation = 4.dp
+                color = BrownPrimary,
+                tonalElevation = 6.dp,
+                shadowElevation = 8.dp
             ) {
-
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 12.dp),
+                        .padding(vertical = 14.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
-                    TopButton(
-                        icon = Icons.Filled.Home,
-                        selected = currentPage == 0
-                    ) { currentPage = 0 }
-
-                    TopButton(
-                        icon = Icons.Filled.DateRange,
-                        selected = currentPage == 1
-                    ) { currentPage = 1 }
-
-                    TopButton(
-                        icon = Icons.Filled.Check,
-                        selected = currentPage == 2
-                    ) { currentPage = 2 }
-
-                    TopButton(
-                        icon = Icons.Filled.Notifications,
-                        selected = currentPage == 3
-                    ) { currentPage = 3 }
+                    TopButton(Icons.Filled.Home, currentPage == 0) { currentPage = 0 }
+                    TopButton(Icons.Filled.DateRange, currentPage == 1) { currentPage = 1 }
+                    TopButton(Icons.Filled.Check, currentPage == 2) { currentPage = 2 }
+                    TopButton(Icons.Filled.Notifications, currentPage == 3) { currentPage = 3 }
                 }
             }
         },
@@ -84,9 +79,11 @@ fun HomeScreen() {
             if (currentPage == 0) {
                 FloatingActionButton(
                     onClick = { showAddPostDialog = true },
-                    containerColor = Color(0xFF90CAF9) // ฟ้า
+                    containerColor = BrownPrimary,
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Text("+", color = Color.White)
+                    Icon(Icons.Default.Add, contentDescription = null)
                 }
             }
         }
@@ -97,28 +94,15 @@ fun HomeScreen() {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .background(Color.White)
+                .background(YellowLight)
                 .padding(16.dp)
         ) {
 
             when (currentPage) {
-
                 0 -> HomeContent()
-
-                1 -> Text(
-                    "Calendar Screen",
-                    color = Color(0xFF6B4F3B)
-                )
-
-                2 -> Text(
-                    "To Do List Screen",
-                    color = Color(0xFF6B4F3B)
-                )
-
-                3 -> Text(
-                    "Message Screen",
-                    color = Color(0xFF6B4F3B)
-                )
+                1 -> Text("Calendar Screen", color = BrownDark)
+                2 -> Text("To Do List Screen", color = BrownDark)
+                3 -> Text("Message Screen", color = BrownDark)
             }
         }
     }
@@ -128,6 +112,8 @@ fun HomeScreen() {
     }
 }
 
+// ================= TOP BUTTON =================
+
 @Composable
 fun TopButton(
     icon: ImageVector,
@@ -136,17 +122,17 @@ fun TopButton(
 ) {
 
     val backgroundColor =
-        if (selected) Color.White
+        if (selected) YellowLight    // เมื่อกดปุ่ม 4 ปุ่มบน
         else Color.Transparent
 
     val iconColor =
-        if (selected) Color(0xFF6B4F3B)
-        else Color(0xFF6B4F3B).copy(alpha = 0.6f)
+        if (selected) BrownPrimary      // ปุ่มบนสีน้ำตาล
+        else WhiteSoft.copy(alpha = 0.6f)   // น้ำตาลจางลงตอนยังไม่เลือก
 
     Box(
         modifier = Modifier
             .size(48.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(backgroundColor)
             .clickable { onClick() },
         contentAlignment = Alignment.Center
@@ -174,16 +160,15 @@ fun HomeContent() {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp),
-                shape = RoundedCornerShape(16.dp),
+                    .padding(vertical = 8.dp),
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(6.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFF4F7FB)
+                    containerColor = WhiteSoft
                 )
             ) {
 
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
+                Column(modifier = Modifier.padding(18.dp)) {
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -193,7 +178,7 @@ fun HomeContent() {
                         Column {
                             Text(
                                 text = members.joinToString { it.name },
-                                color = Color(0xFF6B4F3B),
+                                color = BluePrimary,
                                 style = MaterialTheme.typography.titleMedium
                             )
 
@@ -201,7 +186,7 @@ fun HomeContent() {
                                 text = post.date.format(
                                     DateTimeFormatter.ofPattern("dd MMM yyyy")
                                 ),
-                                color = Color.Gray
+                                color = BrownPrimary
                             )
                         }
 
@@ -210,20 +195,23 @@ fun HomeContent() {
                         ) {
                             Icon(
                                 Icons.Default.Delete,
-                                contentDescription = null
+                                contentDescription = null,
+                                tint = BrownDark
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    Text(post.content)
+                    Text(
+                        post.content,
+                        color = Color.Black
+                    )
                 }
             }
         }
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -233,14 +221,16 @@ fun AddPostDialog(onDismiss: () -> Unit) {
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showAddMemberDialog by remember { mutableStateOf(false) }
+    var showMemberSelector by remember { mutableStateOf(false) }
 
     val members = AppState.members
     val selectedMembers = remember { mutableStateListOf<Member>() }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(32.dp),
-        containerColor = Color(0xFFF8FBFF),
+        shape = RoundedCornerShape(28.dp),
+        containerColor = Color.White,
+        tonalElevation = 8.dp,
         confirmButton = {},
         dismissButton = {},
         title = null,
@@ -254,55 +244,48 @@ fun AddPostDialog(onDismiss: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
 
+                    // 🔵 Member Button
                     Button(
-                        onClick = { showAddMemberDialog = true },
+                        onClick = { showMemberSelector = true },
                         shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF4A90E2)
+                            containerColor = BrownDark,
+                            contentColor = Color.White
                         )
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
 
                             Text(
                                 text = when {
-                                    selectedMembers.isEmpty() ->
-                                        "Add Member"
-                                    selectedMembers.size == 1 ->
-                                        selectedMembers.first().name
-                                    else ->
-                                        "${selectedMembers.size} Members"
-                                },
-                                color = Color.White
+                                    selectedMembers.isEmpty() -> "Add Member"
+                                    selectedMembers.size == 1 -> selectedMembers.first().name
+                                    else -> "${selectedMembers.size} Members"
+                                }
                             )
 
-                            if (selectedMembers.size > 1) {
+                            if (selectedMembers.isNotEmpty()) {
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Icon(
-                                    Icons.Default.KeyboardArrowDown,
-                                    contentDescription = null,
-                                    tint = Color.White
-                                )
+                                Icon(Icons.Default.KeyboardArrowDown, null)
                             }
                         }
                     }
 
+                    // 🟤 Date
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable {
-                            showDatePicker = true
-                        }
+                        modifier = Modifier.clickable { showDatePicker = true }
                     ) {
                         Icon(
                             Icons.Default.DateRange,
                             contentDescription = null,
-                            tint = Color(0xFF4A90E2)
+                            tint = BrownPrimary
                         )
 
                         Spacer(modifier = Modifier.width(6.dp))
 
                         Text(
                             text = selectedDate.toString(),
-                            color = Color(0xFF8B5E3C)
+                            color = BrownDark
                         )
                     }
                 }
@@ -316,7 +299,12 @@ fun AddPostDialog(onDismiss: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(140.dp),
-                    shape = RoundedCornerShape(20.dp)
+                    shape = RoundedCornerShape(20.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BluePrimary,
+                        unfocusedBorderColor = BlueSoft,
+                        cursorColor = BluePrimary
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -327,7 +315,7 @@ fun AddPostDialog(onDismiss: () -> Unit) {
                 ) {
 
                     TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = Color.Gray)
+                        Text("Cancel", color = BrownDark)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -335,28 +323,28 @@ fun AddPostDialog(onDismiss: () -> Unit) {
                     Button(
                         onClick = {
                             if (content.isNotBlank()) {
-
                                 AppState.addPost(
                                     memberIds = selectedMembers.map { it.id },
                                     content = content,
                                     date = selectedDate
                                 )
-
                                 onDismiss()
                             }
                         },
                         shape = RoundedCornerShape(50),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF8B5E3C)
+                            containerColor = BrownPrimary,
+                            contentColor = Color.White
                         )
                     ) {
-                        Text("save", color = Color.White)
+                        Text("Save")
                     }
                 }
             }
         }
     )
 
+    // 📅 Date Picker
     if (showDatePicker) {
 
         val datePickerState = rememberDatePickerState()
@@ -367,29 +355,101 @@ fun AddPostDialog(onDismiss: () -> Unit) {
                 TextButton(
                     onClick = {
                         datePickerState.selectedDateMillis?.let { millis ->
-                            selectedDate = LocalDate.ofEpochDay(
-                                millis / (24 * 60 * 60 * 1000)
-                            )
+                            selectedDate = Instant.ofEpochMilli(millis)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
                         }
                         showDatePicker = false
                     }
-                ) { Text("OK") }
+                ) { Text("OK", color = BluePrimary) }
             }
         ) {
-            DatePicker(state = datePickerState)
+            DatePicker(
+                state = datePickerState,
+                colors = DatePickerDefaults.colors(
+                    selectedDayContainerColor = BluePrimary,
+                    todayDateBorderColor = BrownPrimary
+                )
+            )
         }
     }
 
+    // Member dialogs (logic เดิม)
     if (showAddMemberDialog) {
         AddMemberDialog(
             onDismiss = { showAddMemberDialog = false },
-            onMemberAdded = { member ->
-                selectedMembers.add(member)
+            onMemberAdded = { member -> selectedMembers.add(member) }
+        )
+    }
+
+    if (showMemberSelector) {
+
+        AlertDialog(
+            onDismissRequest = { showMemberSelector = false },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(24.dp),
+            confirmButton = {},
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Select Member", color = BrownPrimary)
+
+                    IconButton(
+                        onClick = {
+                            showMemberSelector = false
+                            showAddMemberDialog = true
+                        }
+                    ) {
+                        Icon(Icons.Default.Add, null, tint = BrownPrimary)
+                    }
+                }
+            },
+            text = {
+
+                Column {
+
+                    if (members.isEmpty()) {
+                        Text("No members yet", color = BrownDark)
+                    }
+
+                    members.forEach { member ->
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (selectedMembers.contains(member))
+                                        selectedMembers.remove(member)
+                                    else
+                                        selectedMembers.add(member)
+                                }
+                                .padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+
+                            Checkbox(
+                                checked = selectedMembers.contains(member),
+                                onCheckedChange = {
+                                    if (it) selectedMembers.add(member)
+                                    else selectedMembers.remove(member)
+                                },
+                                colors = CheckboxDefaults.colors(
+                                    checkedColor = BluePrimary
+                                )
+                            )
+
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(member.name, color = BrownDark)
+                        }
+                    }
+                }
             }
         )
     }
 }
-
 
 
 
@@ -404,19 +464,13 @@ fun AddMemberDialog(
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        imageUri = uri
-    }
-
-//    val newMember = AppState.addMember(
- //       name = name,
- //       imageUri = imageUri?.toString()
- //   )
+    ) { uri: Uri? -> imageUri = uri }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         shape = RoundedCornerShape(28.dp),
         containerColor = Color.White,
+        tonalElevation = 8.dp,
         confirmButton = {},
         dismissButton = {},
         title = null,
@@ -428,19 +482,20 @@ fun AddMemberDialog(
                     Icon(
                         Icons.Default.Close,
                         contentDescription = null,
+                        tint = BrownDark,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .clickable { onDismiss() }
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(90.dp)
-                        .background(Color(0xFF5DA9E9), CircleShape)
+                        .size(95.dp)
+                        .background(BlueSoft, CircleShape) // รูปโปรไฟล์สำหรับ add
                         .clickable { launcher.launch("image/*") }
                 ) {
 
@@ -449,7 +504,7 @@ fun AddMemberDialog(
                             model = imageUri,
                             contentDescription = null,
                             modifier = Modifier
-                                .size(90.dp)
+                                .size(95.dp)
                                 .clip(CircleShape),
                             contentScale = ContentScale.Crop
                         )
@@ -458,7 +513,7 @@ fun AddMemberDialog(
                             Icons.Default.Person,
                             contentDescription = null,
                             tint = Color.White,
-                            modifier = Modifier.size(45.dp)
+                            modifier = Modifier.size(48.dp)
                         )
                     }
                 }
@@ -470,37 +525,41 @@ fun AddMemberDialog(
                     onValueChange = { name = it },
                     placeholder = { Text("Member Name") },
                     shape = RoundedCornerShape(50),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BluePrimary,
+                        unfocusedBorderColor = BlueSoft,
+                        cursorColor = BluePrimary
+                    )
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(26.dp))
 
                 Button(
                     onClick = {
                         if (name.isNotBlank()) {
-
                             val newMember = AppState.addMember(
                                 name = name,
                                 imageUri = imageUri?.toString()
                             )
-
                             onMemberAdded(newMember)
                             onDismiss()
                         }
                     },
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF8B5E3C)
+                        containerColor = BrownPrimary,
+                        contentColor = Color.White
                     )
                 ) {
-                    Row {
-                        Text("save ", color = Color.White)
-                    }
+                    Text("Save")
                 }
             }
         }
     )
 }
+
+
 
 
 

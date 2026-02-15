@@ -12,7 +12,7 @@ data class Member(
 
 data class Post(
     val id: Int,
-    val memberIds: List<Int> = emptyList(),
+    val memberIds: List<Int>,
     val content: String,
     val date: LocalDate
 )

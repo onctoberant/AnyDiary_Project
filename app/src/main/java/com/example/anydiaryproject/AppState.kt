@@ -8,12 +8,17 @@ object AppState {
     val members = mutableStateListOf<Member>()
     val posts = mutableStateListOf<Post>()
 
+    private var nextMemberId = 0
+    private var nextPostId = 0
+
     fun addMember(name: String, imageUri: String?): Member {
+
         val newMember = Member(
-            id = members.size + 1,
+            id = nextMemberId++,   // 🔥 ใช้ตัวนับจริง
             name = name,
             imageUri = imageUri
         )
+
         members.add(newMember)
         return newMember
     }
@@ -24,7 +29,7 @@ object AppState {
         date: LocalDate
     ) {
         val newPost = Post(
-            id = posts.size + 1,
+            id = nextPostId++,
             memberIds = memberIds,
             content = content,
             date = date
@@ -38,16 +43,8 @@ object AppState {
 }
 
 
-val notifications = mutableStateListOf<NotificationItem>()
 
-fun addNotification(message: String) {
-    notifications.add(
-        NotificationItem(
-            id = notifications.size + 1,
-            message = message,
-            date = java.time.LocalDate.now().toString()
-        )
-    )
-}
+
+
 
 
