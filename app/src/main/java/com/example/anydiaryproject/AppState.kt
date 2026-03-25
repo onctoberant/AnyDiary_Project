@@ -64,6 +64,13 @@ object AppState {
         todos.remove(todo)
     }
 
+    fun toggleFavorite(member: Member) {
+        val index = members.indexOf(member)
+        if (index != -1) {
+            members[index] = member.copy(isFavorite = !member.isFavorite)
+        }
+    }
+
     fun getDueNotifications(): List<Todo> {
         val today = LocalDate.now()
         return todos.filter { !it.isDone && !it.date.isAfter(today) }

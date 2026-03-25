@@ -1,8 +1,10 @@
 package com.example.anydiaryproject
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -16,232 +18,168 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import coil.compose.AsyncImage
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
-
-// Colors (same palette)
-private val BluePrimary = Color(0xFF4DB8FF)
-private val BlueLight = Color(0xFFA7D8FF)
-private val BrownDark = Color(0xFF8B5E3C)
-private val BrownLight = Color(0xFFD2B48C)
-private val PinkPastel = Color(0xFFFFB6C1)
-private val YellowPastel = Color(0xFFFFE599)
-private val CreamWhite = Color(0xFFFFFDF7)
-private val CardWhite = Color(0xFFFFFFFF)
-private val MintGreen = Color(0xFFB5EAD7)
 
 @Composable
 fun CalendarContent() {
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
     var selectedDay by remember { mutableStateOf<LocalDate?>(null) }
-    var selectedMemberFilter by remember { mutableStateOf<Member?>(null) }
+    var selectedMember by remember { mutableStateOf<Member?>(null) }
 
-    val posts = if (selectedMemberFilter == null) {
-        AppState.posts
-    } else {
-        AppState.posts.filter { it.memberIds.contains(selectedMemberFilter!!.id) }
-    }
+    val posts = if (selectedMember == null) AppState.posts
+    else AppState.posts.filter { it.memberIds.contains(selectedMember!!.id) }
 
     val daysWithPosts = posts.map { it.date }.toSet()
 
     Column(
-        modifier = Modifier
+        Modifier
             .fillMaxSize()
-            .padding(12.dp)
+            .padding(top = 8.dp, start = 20.dp, end = 20.dp, bottom = 100.dp)
     ) {
-        // Member filter chips
+        // Member filter
         if (AppState.members.isNotEmpty()) {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = 14.dp),
+                contentPadding = PaddingValues(vertical = 4.dp)
             ) {
                 item {
-                    FilterChip(
-                        selected = selectedMemberFilter == null,
-                        onClick = { selectedMemberFilter = null },
-                        label = { Text("All", fontSize = 12.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = BluePrimary,
-                            selectedLabelColor = Color.White
-                        ),
-                        shape = RoundedCornerShape(50)
-                    )
+                    val all = selectedMember == null
+                    Surface(
+                        Modifier.bouncyClick { selectedMember = null },
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (all) BlueBright else FieldBg
+                    ) {
+                        Text(
+                            "All", fontSize = 13.sp, fontWeight = FontWeight.Medium,
+                            color = if (all) Color.White else TextDark,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
                 }
-                items(AppState.members) { member ->
-                    FilterChip(
-                        selected = selectedMemberFilter == member,
-                        onClick = {
-                            selectedMemberFilter = if (selectedMemberFilter == member) null else member
-                        },
-                        label = { Text(member.name, fontSize = 12.sp) },
-                        leadingIcon = {
-                            Box(
-                                modifier = Modifier
-                                    .size(22.dp)
-                                    .clip(CircleShape)
-                                    .background(BlueLight),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (member.imageUri != null) {
-                                    AsyncImage(
-                                        model = member.imageUri,
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(22.dp)
-                                            .clip(CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    Text(
-                                        member.name.take(1).uppercase(),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = BluePrimary
-                                    )
-                                }
+                items(AppState.members) { m ->
+                    val sel = selectedMember == m
+                    Surface(
+                        Modifier.bouncyClick { selectedMember = if (sel) null else m },
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (sel) BlueBright else FieldBg
+                    ) {
+                        Row(
+                            Modifier.padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(if (sel) Color.White.copy(0.25f) else BlueSoft.copy(0.3f)), contentAlignment = Alignment.Center) {
+                                if (m.imageUri != null) AsyncImage(m.imageUri, null, Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape), contentScale = ContentScale.Crop)
+                                else Text(m.name.take(1).uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = if (sel) Color.White else BrownDark)
                             }
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = PinkPastel.copy(alpha = 0.5f),
-                            selectedLabelColor = BrownDark
-                        ),
-                        shape = RoundedCornerShape(50)
-                    )
+                            Spacer(Modifier.width(6.dp))
+                            Text(m.name, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (sel) Color.White else TextDark)
+                            if (m.isFavorite) { Spacer(Modifier.width(3.dp)); Text("⭐", fontSize = 9.sp) }
+                        }
+                    }
                 }
             }
         }
 
-        // Month header
+        // Calendar card
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = CardWhite),
-            elevation = CardDefaults.cardElevation(2.dp)
+            Modifier
+                .fillMaxWidth()
+                .cardShadow(8.dp, RoundedCornerShape(20.dp)),
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(containerColor = CardWhite)
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = {
-                        currentMonth = currentMonth.minusMonths(1)
-                    }) {
-                        Icon(
-                            Icons.Default.KeyboardArrowLeft,
-                            contentDescription = "Previous",
-                            tint = BrownDark
-                        )
+            Column(Modifier.padding(18.dp)) {
+                // Month nav
+                Row(Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }, Modifier.size(32.dp)) {
+                        Icon(Icons.Default.KeyboardArrowLeft, "Prev", tint = BlueBright, modifier = Modifier.size(22.dp))
                     }
-
                     Text(
-                        text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)} ${currentMonth.year}",
-                        fontWeight = FontWeight.Bold,
-                        color = BrownDark,
-                        fontSize = 18.sp
+                        "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.ENGLISH)} ${currentMonth.year}",
+                        fontWeight = FontWeight.Bold, color = TextDark, fontSize = 16.sp
                     )
-
-                    IconButton(onClick = {
-                        currentMonth = currentMonth.plusMonths(1)
-                    }) {
-                        Icon(
-                            Icons.Default.KeyboardArrowRight,
-                            contentDescription = "Next",
-                            tint = BrownDark
-                        )
+                    IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }, Modifier.size(32.dp)) {
+                        Icon(Icons.Default.KeyboardArrowRight, "Next", tint = BlueBright, modifier = Modifier.size(22.dp))
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Day-of-week headers
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    val days = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
-                    days.forEach { day ->
-                        Text(
-                            text = day,
-                            modifier = Modifier.weight(1f),
-                            textAlign = TextAlign.Center,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = BrownLight
-                        )
+                // Day headers
+                Row(Modifier.fillMaxWidth()) {
+                    listOf("S", "M", "T", "W", "T", "F", "S").forEach {
+                        Text(it, Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextGrey)
                     }
                 }
+                Spacer(Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(6.dp))
+                val first = currentMonth.atDay(1)
+                val days = currentMonth.lengthOfMonth()
+                val startOff = first.dayOfWeek.value % 7
+                val rows = (startOff + days + 6) / 7
 
-                // Calendar grid
-                val firstOfMonth = currentMonth.atDay(1)
-                val daysInMonth = currentMonth.lengthOfMonth()
-                val startDayOfWeek = firstOfMonth.dayOfWeek.value % 7 // Sunday=0
-
-                val totalCells = startDayOfWeek + daysInMonth
-                val rows = (totalCells + 6) / 7
-
-                for (row in 0 until rows) {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        for (col in 0..6) {
-                            val cellIndex = row * 7 + col
-                            val dayNum = cellIndex - startDayOfWeek + 1
-
-                            if (dayNum in 1..daysInMonth) {
-                                val date = currentMonth.atDay(dayNum)
+                for (r in 0 until rows) {
+                    Row(Modifier.fillMaxWidth()) {
+                        for (c in 0..6) {
+                            val d = r * 7 + c - startOff + 1
+                            if (d in 1..days) {
+                                val date = currentMonth.atDay(d)
                                 val hasPost = daysWithPosts.contains(date)
                                 val isToday = date == LocalDate.now()
-                                val isSelected = date == selectedDay
+                                val isSel = date == selectedDay
 
                                 Box(
-                                    modifier = Modifier
+                                    Modifier
                                         .weight(1f)
                                         .aspectRatio(1f)
                                         .padding(2.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(
-                                            when {
-                                                isSelected -> BluePrimary.copy(alpha = 0.2f)
-                                                isToday -> YellowPastel.copy(alpha = 0.5f)
-                                                else -> Color.Transparent
-                                            }
-                                        )
+                                        .clip(CircleShape)
                                         .then(
-                                            if (isToday) Modifier.border(
+                                            if (isSel) Modifier.background(BlueBright)
+                                            else if (isToday) Modifier.border(
                                                 1.5.dp,
-                                                BluePrimary,
-                                                RoundedCornerShape(10.dp)
+                                                BrownLight,
+                                                CircleShape
                                             )
                                             else Modifier
                                         )
-                                        .clickable { selectedDay = date },
+                                        .bouncyClick { selectedDay = date },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                         Text(
-                                            text = "$dayNum",
-                                            fontSize = 14.sp,
-                                            fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                                            color = if (isSelected) BluePrimary else BrownDark
+                                            "$d", fontSize = 14.sp,
+                                            fontWeight = if (isSel || isToday) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (isSel) Color.White else TextDark
                                         )
                                         if (hasPost) {
-                                            Text("❤️", fontSize = 8.sp)
+                                            Box(Modifier
+                                                .padding(top = 1.dp)
+                                                .size(5.dp)
+                                                .clip(CircleShape)
+                                                .background(if (isSel) Color.White else StatusRed)) {}
                                         }
                                     }
                                 }
-                            } else {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
+                            } else Spacer(Modifier.weight(1f))
                         }
                     }
                 }
@@ -251,93 +189,65 @@ fun CalendarContent() {
         // Posts for selected day
         if (selectedDay != null) {
             val dayPosts = posts.filter { it.date == selectedDay }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "📝 Posts on ${selectedDay!!.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}",
-                fontWeight = FontWeight.Bold,
-                color = BrownDark,
-                fontSize = 14.sp
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
+            Box {
+                Spacer(Modifier.height(16.dp))
+            }
 
             if (dayPosts.isEmpty()) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
+                Surface(
                     shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = CardWhite)
+                    color = FieldBg,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        "No posts on this day",
-                        modifier = Modifier.padding(16.dp),
-                        color = BrownLight,
-                        textAlign = TextAlign.Center
+                        "No Memories Yet",
+                        color = TextGrey,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(20.dp)
                     )
                 }
             } else {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
                     items(dayPosts, key = { it.id }) { post ->
-                        val members = AppState.members.filter {
-                            post.memberIds.contains(it.id)
-                        }
+                        val members = AppState.members.filter { post.memberIds.contains(it.id) }
+                        val src = remember { MutableInteractionSource() }
+                        val pressed by src.collectIsPressedAsState()
+                        val sc by animateFloatAsState(if (pressed) 0.98f else 1f, label = "s")
+
                         Card(
-                            modifier = Modifier.fillMaxWidth(),
+                            Modifier
+                                .fillMaxWidth()
+                                .scale(sc)
+                                .cardShadow(4.dp, RoundedCornerShape(14.dp))
+                                .clickable(interactionSource = src, indication = null as androidx.compose.foundation.Indication?) { },
                             shape = RoundedCornerShape(14.dp),
-                            colors = CardDefaults.cardColors(containerColor = CardWhite),
-                            elevation = CardDefaults.cardElevation(2.dp)
+                            colors = CardDefaults.cardColors(containerColor = CardWhite)
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
+                            Column(Modifier.padding(14.dp)) {
                                 if (members.isNotEmpty()) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        members.forEach { member ->
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(24.dp)
+                                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        items(members) { m ->
+                                            Surface(color = FieldBg, shape = RoundedCornerShape(10.dp)) {
+                                                Row(Modifier.padding(start = 3.dp, end = 8.dp, top = 3.dp, bottom = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                                                    Box(Modifier
+                                                        .size(20.dp)
                                                         .clip(CircleShape)
-                                                        .background(BlueLight),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    if (member.imageUri != null) {
-                                                        AsyncImage(
-                                                            model = member.imageUri,
-                                                            contentDescription = null,
-                                                            modifier = Modifier
-                                                                .size(24.dp)
-                                                                .clip(CircleShape),
-                                                            contentScale = ContentScale.Crop
-                                                        )
-                                                    } else {
-                                                        Text(
-                                                            member.name.take(1).uppercase(),
-                                                            fontSize = 10.sp,
-                                                            fontWeight = FontWeight.Bold,
-                                                            color = BluePrimary
-                                                        )
+                                                        .background(BlueSoft.copy(0.3f)), contentAlignment = Alignment.Center) {
+                                                        if (m.imageUri != null) AsyncImage(m.imageUri, null, Modifier
+                                                            .size(20.dp)
+                                                            .clip(CircleShape), contentScale = ContentScale.Crop)
+                                                        else Text(m.name.take(1).uppercase(), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrownDark)
                                                     }
+                                                    Spacer(Modifier.width(4.dp))
+                                                    Text(m.name, fontSize = 11.sp, color = TextDark, fontWeight = FontWeight.Medium)
                                                 }
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(
-                                                    member.name,
-                                                    fontSize = 12.sp,
-                                                    color = BrownDark
-                                                )
                                             }
                                         }
                                     }
-                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Spacer(Modifier.height(8.dp))
                                 }
-                                Text(
-                                    post.content,
-                                    color = Color(0xFF333333),
-                                    fontSize = 14.sp,
-                                    maxLines = 3,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                                Text(post.content, color = TextDark, fontSize = 14.sp, lineHeight = 22.sp)
                             }
                         }
                     }

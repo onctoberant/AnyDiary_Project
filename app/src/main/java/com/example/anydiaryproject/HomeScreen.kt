@@ -4,9 +4,11 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -21,34 +23,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.text.KeyboardOptions
 import coil.compose.AsyncImage
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
-// =================== COLOR PALETTE ===================
-private val BluePrimary = Color(0xFF4DB8FF)
-private val BlueLight = Color(0xFFA7D8FF)
-private val BrownLight = Color(0xFFD2B48C)
-private val BrownDark = Color(0xFF8B5E3C)
-private val YellowPastel = Color(0xFFFFE599)
-private val PinkPastel = Color(0xFFFFB6C1)
-private val MintGreen = Color(0xFFB5EAD7)
-private val CreamWhite = Color(0xFFFFFDF7)
-private val CardWhite = Color(0xFFFFFFFF)
-
-// =================== HOME SCREEN (MAIN SHELL) ===================
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen() {
@@ -59,343 +51,201 @@ fun HomeScreen() {
     val notificationCount = AppState.getDueNotifications().size
 
     Scaffold(
-        containerColor = CreamWhite,
+        containerColor = BgWarm,
+        floatingActionButtonPosition = FabPosition.Center,
         bottomBar = {
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(elevation = 12.dp),
+                modifier = Modifier.fillMaxWidth(),
                 color = CardWhite,
-                tonalElevation = 4.dp
+                shadowElevation = 6.dp,
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    BottomNavItem(
-                        icon = Icons.Filled.Home,
-                        label = "Home",
-                        selected = currentPage == 0,
-                        onClick = { currentPage = 0 }
-                    )
-                    BottomNavItem(
-                        icon = Icons.Filled.DateRange,
-                        label = "Calendar",
-                        selected = currentPage == 1,
-                        onClick = { currentPage = 1 }
-                    )
-                    BottomNavItem(
-                        icon = Icons.Filled.CheckCircle,
-                        label = "Todo",
-                        selected = currentPage == 2,
-                        onClick = { currentPage = 2 }
-                    )
-                    BottomNavItem(
-                        icon = Icons.Filled.Notifications,
-                        label = "Alert",
-                        selected = currentPage == 3,
-                        badgeCount = notificationCount,
-                        onClick = { currentPage = 3 }
-                    )
+                    NavItem(Icons.Outlined.Home, "Home", currentPage == 0) { currentPage = 0 }
+                    NavItem(Icons.Outlined.DateRange, "Calendar", currentPage == 1) { currentPage = 1 }
+                    NavItem(Icons.Outlined.CheckCircle, "Todo", currentPage == 2) { currentPage = 2 }
+                    NavItem(Icons.Outlined.Notifications, "Alerts", currentPage == 3, notificationCount) { currentPage = 3 }
                 }
             }
         },
         floatingActionButton = {
-            when (currentPage) {
-                0 -> FloatingActionButton(
-                    onClick = { showAddPostDialog = true },
+            if (currentPage == 0 || currentPage == 2) {
+                FloatingActionButton(
+                    onClick = {
+                        if (currentPage == 2) showAddTodoDialog = true else showAddPostDialog = true
+                    },
                     containerColor = BrownDark,
                     contentColor = Color.White,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.shadow(8.dp, RoundedCornerShape(16.dp))
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .size(56.dp)
+                        .cardShadow(10.dp, CircleShape)
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Create Post")
-                }
-                2 -> FloatingActionButton(
-                    onClick = { showAddTodoDialog = true },
-                    containerColor = MintGreen,
-                    contentColor = BrownDark,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.shadow(8.dp, RoundedCornerShape(16.dp))
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Todo")
+                    Icon(Icons.Default.Add, "Create", modifier = Modifier.size(28.dp))
                 }
             }
         }
-    ) { padding ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
-                .padding(padding)
                 .fillMaxSize()
-                .background(CreamWhite)
+                .padding(paddingValues)
         ) {
-            // Header
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(BlueLight, PinkPastel.copy(alpha = 0.5f))
-                        )
-                    )
-                    .padding(horizontal = 20.dp, vertical = 16.dp)
-            ) {
-                val title = when (currentPage) {
-                    0 -> "🎤 My Diary"
-                    1 -> "📅 Calendar"
-                    2 -> "✅ Todo List"
-                    3 -> "🔔 Notifications"
-                    else -> ""
-                }
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = BrownDark
-                    )
-                )
-            }
+            // Shared top logo
+            AppLogo()
 
-            // Content
-            when (currentPage) {
-                0 -> HomeContent()
-                1 -> CalendarContent()
-                2 -> TodoContent()
-                3 -> NotificationContent()
+            Box(modifier = Modifier.fillMaxSize().weight(1f)) {
+                when (currentPage) {
+                    0 -> HomeContent()
+                    1 -> CalendarContent()
+                    2 -> TodoContent()
+                    3 -> NotificationContent()
+                }
             }
         }
     }
 
-    if (showAddPostDialog) {
-        AddPostDialog { showAddPostDialog = false }
-    }
-    if (showAddTodoDialog) {
-        AddTodoDialog { showAddTodoDialog = false }
-    }
+    if (showAddPostDialog) AddPostDialog { showAddPostDialog = false }
+    if (showAddTodoDialog) AddTodoDialog { showAddTodoDialog = false }
 }
 
-// =================== BOTTOM NAV ITEM ===================
 @Composable
-fun BottomNavItem(
-    icon: ImageVector,
-    label: String,
-    selected: Boolean,
-    badgeCount: Int = 0,
-    onClick: () -> Unit
-) {
-    val color by animateColorAsState(
-        targetValue = if (selected) BluePrimary else BrownLight,
-        label = "nav_color"
-    )
+fun NavItem(icon: ImageVector, label: String, selected: Boolean, badge: Int = 0, onClick: () -> Unit) {
+    val tint by animateColorAsState(if (selected) BlueBright else TextLight, label = "nav")
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 6.dp)
+        modifier = Modifier.bouncyClick(onClick).padding(horizontal = 14.dp, vertical = 4.dp)
     ) {
         Box {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = color,
-                modifier = Modifier.size(26.dp)
-            )
-            if (badgeCount > 0) {
+            Icon(icon, label, tint = tint, modifier = Modifier.size(24.dp))
+            if (badge > 0) {
                 Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = 4.dp, y = (-2).dp)
-                        .size(16.dp)
-                        .background(PinkPastel, CircleShape),
+                    modifier = Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-4).dp)
+                        .size(14.dp).background(StatusRed, CircleShape),
                     contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "$badgeCount",
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
+                ) { Text("$badge", fontSize = 8.sp, fontWeight = FontWeight.Bold, color = Color.White) }
             }
         }
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = label,
-            fontSize = 11.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            color = color
-        )
+        Spacer(Modifier.height(2.dp))
+        Text(label, fontSize = 10.sp, color = tint, fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal)
         if (selected) {
-            Spacer(modifier = Modifier.height(2.dp))
-            Box(
-                modifier = Modifier
-                    .width(20.dp)
-                    .height(3.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(BluePrimary)
-            )
+            Spacer(Modifier.height(4.dp))
+            Box(Modifier.size(width = 20.dp, height = 3.dp).clip(CircleShape).background(BlueBright)) {}
         }
     }
 }
 
-// =================== HOME CONTENT (POST LIST) ===================
+// =================== HOME CONTENT ===================
 @Composable
 fun HomeContent() {
     val posts = AppState.posts
-
-    if (posts.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("🎤", fontSize = 48.sp)
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    "No diary entries yet!",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = BrownLight
-                )
-                Text(
-                    "Tap + to record your concert memories",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = BrownLight.copy(alpha = 0.7f)
-                )
-            }
-        }
-        return
-    }
+    val favorites = AppState.members.filter { it.isFavorite }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        contentPadding = PaddingValues(bottom = 100.dp)
     ) {
-        items(posts, key = { it.id }) { post ->
-            PostCard(post)
-        }
-    }
-}
-
-// =================== POST CARD ===================
-@Composable
-fun PostCard(post: Post) {
-    val members = AppState.members.filter { post.memberIds.contains(it.id) }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = CardWhite)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Date + Delete
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier
-                            .background(YellowPastel, RoundedCornerShape(8.dp))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "📅 ${post.date.format(DateTimeFormatter.ofPattern("dd MMM yyyy"))}",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = BrownDark
-                        )
-                    }
-                }
-                IconButton(
-                    onClick = { AppState.deletePost(post) },
-                    modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = PinkPastel,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-            }
-
-            // Members row
-            if (members.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(members) { member ->
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.width(56.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(BlueLight)
-                                    .border(2.dp, BluePrimary, CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (member.imageUri != null) {
-                                    AsyncImage(
-                                        model = member.imageUri,
-                                        contentDescription = member.name,
-                                        modifier = Modifier
-                                            .size(44.dp)
-                                            .clip(CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    Text(
-                                        text = member.name.take(1).uppercase(),
-                                        fontWeight = FontWeight.Bold,
-                                        color = BluePrimary,
-                                        fontSize = 18.sp
-                                    )
+        // Favorite Artists row
+        if (favorites.isNotEmpty()) {
+            item {
+                Column(modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 8.dp)) {
+                    Text("⭐ Favorites", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = BrownDark)
+                    Spacer(Modifier.height(10.dp))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        items(favorites) { member ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Box(
+                                    modifier = Modifier.size(52.dp).clip(CircleShape)
+                                        .background(BlueSoft.copy(alpha = 0.3f))
+                                        .cardShadow(4.dp, CircleShape),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (member.imageUri != null) {
+                                        AsyncImage(member.imageUri, null, Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+                                    } else {
+                                        Text(member.name.take(1).uppercase(), fontWeight = FontWeight.Bold, color = BrownDark, fontSize = 18.sp)
+                                    }
                                 }
+                                Spacer(Modifier.height(4.dp))
+                                Text(member.name, fontSize = 11.sp, color = TextDark, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = member.name,
-                                fontSize = 10.sp,
-                                color = BrownDark,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(12.dp))
+        if (posts.isEmpty()) {
+            item {
+                Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(Modifier.size(64.dp).background(BlueSoft.copy(0.2f), CircleShape), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Outlined.Edit, null, tint = BlueBright, modifier = Modifier.size(28.dp))
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        Text("No Memories Yet", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                        Text("Start capturing your artist moments", fontSize = 14.sp, color = TextGrey)
+                    }
+                }
+            }
+        } else {
+            items(posts, key = { it.id }) { post ->
+                PostCard(post, Modifier.padding(horizontal = 20.dp, vertical = 6.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun PostCard(post: Post, modifier: Modifier = Modifier) {
+    val members = AppState.members.filter { post.memberIds.contains(it.id) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (isPressed) 0.98f else 1f, label = "s")
+
+    Card(
+        modifier = modifier.fillMaxWidth().scale(scale)
+            .cardShadow(if (isPressed) 10.dp else 6.dp, RoundedCornerShape(20.dp))
+            .clickable(interactionSource = interactionSource, indication = null as androidx.compose.foundation.Indication?) { },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = CardWhite)
+    ) {
+        Column(Modifier.padding(18.dp)) {
+            val memberText = if (members.isNotEmpty()) members.joinToString(", ") { it.name } else "MEMBER"
+            Text(
+                "${post.date.format(DateTimeFormatter.ofPattern("dd MM yy"))}   •   ${memberText.uppercase()}",
+                fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = BrownDark
+            )
+            Spacer(Modifier.height(8.dp))
+            HorizontalDivider(color = FieldBg, thickness = 1.dp)
+            Spacer(Modifier.height(12.dp))
 
             // Content
-            Text(
-                text = post.content,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF333333),
-                lineHeight = 22.sp
-            )
+            Text(post.content, fontSize = 14.sp, color = TextDark, lineHeight = 22.sp)
 
-            // Concert theme emoji footer
-            Spacer(modifier = Modifier.height(8.dp))
-            Row {
-                Text("❤️", fontSize = 12.sp)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("⭐", fontSize = 12.sp)
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("🎤", fontSize = 12.sp)
+            Spacer(Modifier.height(12.dp))
+            HorizontalDivider(color = FieldBg, thickness = 1.dp)
+            Spacer(Modifier.height(8.dp))
+
+            // Delete
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                OutlinedButton(
+                    onClick = { AppState.deletePost(post) },
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    modifier = Modifier.height(28.dp),
+                    border = BorderStroke(1.dp, FieldBg),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Delete", fontSize = 11.sp, color = TextGrey)
+                }
             }
         }
     }
@@ -408,431 +258,247 @@ fun AddPostDialog(onDismiss: () -> Unit) {
     var content by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var showDatePicker by remember { mutableStateOf(false) }
-    var showAddMemberDialog by remember { mutableStateOf(false) }
     var showMemberSelector by remember { mutableStateOf(false) }
-
-    val members = AppState.members
     val selectedMembers = remember { mutableStateListOf<Member>() }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(28.dp),
-        containerColor = CreamWhite,
-        tonalElevation = 8.dp,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = CardWhite,
+        tonalElevation = 0.dp,
+        modifier = Modifier.fillMaxWidth().cardShadow(16.dp, RoundedCornerShape(24.dp)),
         confirmButton = {},
         dismissButton = {},
-        title = {
-            Text(
-                "✏️ New Diary Entry",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = BrownDark
-                )
-            )
-        },
+        title = { Text("Create Memory", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 20.sp) },
         text = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                // Date selector
+            Column(Modifier.fillMaxWidth()) {
+                // Date
+                Text("Date", fontSize = 12.sp, color = TextGrey, modifier = Modifier.padding(bottom = 6.dp))
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showDatePicker = true },
-                    shape = RoundedCornerShape(14.dp),
-                    color = YellowPastel.copy(alpha = 0.5f)
+                    Modifier.fillMaxWidth().bouncyClick { showDatePicker = true },
+                    shape = RoundedCornerShape(14.dp), color = FieldBg
                 ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.DateRange,
-                            contentDescription = null,
-                            tint = BrownDark
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = selectedDate.format(
-                                DateTimeFormatter.ofPattern("dd MMMM yyyy")
-                            ),
-                            color = BrownDark,
-                            fontWeight = FontWeight.Medium
-                        )
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.DateRange, null, tint = BlueBright, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(10.dp))
+                        Text(selectedDate.format(DateTimeFormatter.ofPattern("dd MMMM yyyy")), color = TextDark, fontSize = 14.sp)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(Modifier.height(14.dp))
 
-                // Member selector button
+                // Members
+                Text("Member", fontSize = 12.sp, color = TextGrey, modifier = Modifier.padding(bottom = 6.dp))
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showMemberSelector = true },
-                    shape = RoundedCornerShape(14.dp),
-                    color = BlueLight.copy(alpha = 0.4f)
+                    Modifier.fillMaxWidth().bouncyClick { showMemberSelector = true },
+                    shape = RoundedCornerShape(14.dp), color = FieldBg
                 ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = null,
-                            tint = BluePrimary
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Person, null, tint = BlueBright, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(10.dp))
                         Text(
-                            text = when {
-                                selectedMembers.isEmpty() -> "👥 Add Members (artists / friends)"
-                                selectedMembers.size == 1 -> "👤 ${selectedMembers.first().name}"
-                                else -> "👥 ${selectedMembers.size} members selected"
-                            },
-                            color = BrownDark
+                            if (selectedMembers.isEmpty()) "Select Member" else "${selectedMembers.size} Member(s)",
+                            color = if (selectedMembers.isEmpty()) TextGrey else TextDark, fontSize = 14.sp
                         )
                     }
                 }
 
-                // Selected member chips
-                if (selectedMembers.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        items(selectedMembers.toList()) { member ->
-                            AssistChip(
-                                onClick = { selectedMembers.remove(member) },
-                                label = { Text(member.name, fontSize = 12.sp) },
-                                trailingIcon = {
-                                    Icon(
-                                        Icons.Default.Close,
-                                        null,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                },
-                                colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = PinkPastel.copy(alpha = 0.3f)
-                                ),
-                                shape = RoundedCornerShape(50)
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(Modifier.height(14.dp))
 
                 // Content
+                Text("Description", fontSize = 12.sp, color = TextGrey, modifier = Modifier.padding(bottom = 6.dp))
                 OutlinedTextField(
-                    value = content,
-                    onValueChange = { content = it },
-                    placeholder = {
-                        Text(
-                            "วันนี้ไปเจอใคร ทำอะไรมา? 🎵\nWhat did you do today?",
-                            color = BrownLight
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    value = content, onValueChange = { content = it },
+                    placeholder = { Text("Write your memory", color = TextLight, fontSize = 14.sp) },
+                    modifier = Modifier.fillMaxWidth().height(150.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = BluePrimary,
-                        unfocusedBorderColor = BlueLight,
-                        cursorColor = BluePrimary,
-                        focusedContainerColor = CardWhite,
-                        unfocusedContainerColor = CardWhite
-                    )
+                        focusedBorderColor = BlueBright, unfocusedBorderColor = FieldBg,
+                        cursorColor = BlueBright, focusedContainerColor = FieldBg, unfocusedContainerColor = FieldBg
+                    ),
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TextDark, lineHeight = 22.sp),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Default)
                 )
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(Modifier.height(20.dp))
 
-                // Actions
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = BrownLight)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss, shape = RoundedCornerShape(14.dp)) {
+                        Text("Cancel", color = TextGrey, fontWeight = FontWeight.Medium)
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(Modifier.width(10.dp))
                     Button(
                         onClick = {
                             if (content.isNotBlank()) {
-                                AppState.addPost(
-                                    memberIds = selectedMembers.map { it.id },
-                                    content = content,
-                                    date = selectedDate
-                                )
+                                AppState.addPost(selectedMembers.map { it.id }, content, selectedDate)
                                 onDismiss()
                             }
                         },
-                        shape = RoundedCornerShape(50),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = BrownDark,
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Text("💾 Save")
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BlueBright),
+                        modifier = Modifier.cardShadow(6.dp, RoundedCornerShape(14.dp))
+                    ) { Text("Save", fontWeight = FontWeight.Bold, color = Color.White) }
+                }
+            }
+        }
+    )
+
+    if (showDatePicker) {
+        val state = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    state.selectedDateMillis?.let { selectedDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate() }
+                    showDatePicker = false
+                }) { Text("OK", color = BlueBright, fontWeight = FontWeight.Bold) }
+            },
+            colors = DatePickerDefaults.colors(containerColor = CardWhite)
+        ) { DatePicker(state, colors = DatePickerDefaults.colors(selectedDayContainerColor = BlueBright)) }
+    }
+
+    if (showMemberSelector) {
+        MemberSelectorDialog(AppState.members, selectedMembers) { showMemberSelector = false }
+    }
+}
+
+// =================== MEMBER SELECTOR ===================
+@Composable
+fun MemberSelectorDialog(members: List<Member>, selectedMembers: MutableList<Member>, onDismiss: () -> Unit) {
+    var showAdd by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss, containerColor = CardWhite, shape = RoundedCornerShape(24.dp),
+        modifier = Modifier.cardShadow(16.dp, RoundedCornerShape(24.dp)),
+        confirmButton = {
+            Button(onDismiss, colors = ButtonDefaults.buttonColors(containerColor = BlueBright), shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.padding(bottom = 8.dp, end = 8.dp)) {
+                Text("Done", fontWeight = FontWeight.Bold, color = Color.White)
+            }
+        },
+        title = {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Select Tags/People", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 20.sp)
+                IconButton(onClick = { showAdd = true }, Modifier.background(FieldBg, CircleShape).size(36.dp)) {
+                    Icon(Icons.Default.Add, "Add", tint = BlueBright, modifier = Modifier.size(20.dp))
+                }
+            }
+        },
+        text = {
+            Column(Modifier.heightIn(max = 400.dp)) {
+                if (members.isEmpty()) {
+                    Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                        Text("ยังไม่มีรายการ\nแตะ + เพื่อเพิ่ม", color = TextGrey, textAlign = TextAlign.Center, fontSize = 14.sp)
+                    }
+                } else {
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 8.dp)) {
+                        items(members) { member ->
+                            val isSel = selectedMembers.contains(member)
+                            Surface(
+                                Modifier.fillMaxWidth().bouncyClick {
+                                    if (isSel) selectedMembers.remove(member) else selectedMembers.add(member)
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                color = if (isSel) BlueSoft.copy(alpha = 0.15f) else FieldBg,
+                                border = if (isSel) BorderStroke(1.5.dp, BlueBright) else null
+                            ) {
+                                Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    // Check
+                                    Box(
+                                        Modifier.size(22.dp).clip(CircleShape).background(if (isSel) BlueBright else TextLight.copy(0.3f)),
+                                        contentAlignment = Alignment.Center
+                                    ) { if (isSel) Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(14.dp)) }
+
+                                    Spacer(Modifier.width(10.dp))
+
+                                    // Avatar
+                                    Box(Modifier.size(36.dp).clip(CircleShape).background(BlueSoft.copy(0.25f)), contentAlignment = Alignment.Center) {
+                                        if (member.imageUri != null) AsyncImage(member.imageUri, null, Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+                                        else Text(member.name.take(1).uppercase(), fontWeight = FontWeight.Bold, color = BrownDark, fontSize = 14.sp)
+                                    }
+
+                                    Spacer(Modifier.width(10.dp))
+                                    Text(member.name, color = TextDark, fontSize = 15.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+
+                                    // Favorite toggle
+                                    IconButton(
+                                        onClick = { AppState.toggleFavorite(member) },
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Icon(
+                                            if (member.isFavorite) Icons.Filled.Star else Icons.Outlined.Star,
+                                            "Favorite",
+                                            tint = if (member.isFavorite) FavoriteStar else TextLight,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     )
 
-    // Date Picker
-    if (showDatePicker) {
-        val datePickerState = rememberDatePickerState()
-        DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        datePickerState.selectedDateMillis?.let { millis ->
-                            selectedDate = Instant.ofEpochMilli(millis)
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate()
-                        }
-                        showDatePicker = false
-                    }
-                ) { Text("OK", color = BluePrimary) }
-            }
-        ) {
-            DatePicker(
-                state = datePickerState,
-                colors = DatePickerDefaults.colors(
-                    selectedDayContainerColor = BluePrimary,
-                    todayDateBorderColor = BrownDark
-                )
-            )
-        }
-    }
-
-    // Add new member dialog
-    if (showAddMemberDialog) {
-        AddMemberDialog(
-            onDismiss = { showAddMemberDialog = false },
-            onMemberAdded = { member -> selectedMembers.add(member) }
-        )
-    }
-
-    // Member selector dialog
-    if (showMemberSelector) {
-        AlertDialog(
-            onDismissRequest = { showMemberSelector = false },
-            containerColor = CreamWhite,
-            shape = RoundedCornerShape(24.dp),
-            confirmButton = {
-                TextButton(onClick = { showMemberSelector = false }) {
-                    Text("Done", color = BluePrimary)
-                }
-            },
-            title = {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "👥 Select Members",
-                        color = BrownDark,
-                        fontWeight = FontWeight.Bold
-                    )
-                    IconButton(
-                        onClick = {
-                            showMemberSelector = false
-                            showAddMemberDialog = true
-                        }
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            null,
-                            tint = BluePrimary
-                        )
-                    }
-                }
-            },
-            text = {
-                Column {
-                    if (members.isEmpty()) {
-                        Text(
-                            "No members yet.\nTap + to add your first artist!",
-                            color = BrownLight,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    members.forEach { member ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable {
-                                    if (selectedMembers.contains(member))
-                                        selectedMembers.remove(member)
-                                    else
-                                        selectedMembers.add(member)
-                                }
-                                .padding(vertical = 6.dp, horizontal = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(
-                                checked = selectedMembers.contains(member),
-                                onCheckedChange = {
-                                    if (it) selectedMembers.add(member)
-                                    else selectedMembers.remove(member)
-                                },
-                                colors = CheckboxDefaults.colors(
-                                    checkedColor = BluePrimary
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            // Avatar
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(BlueLight),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (member.imageUri != null) {
-                                    AsyncImage(
-                                        model = member.imageUri,
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    Text(
-                                        member.name.take(1).uppercase(),
-                                        fontWeight = FontWeight.Bold,
-                                        color = BluePrimary
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Text(member.name, color = BrownDark)
-                        }
-                    }
-                }
-            }
-        )
-    }
+    if (showAdd) AddMemberDialog(onDismiss = { showAdd = false }, onMemberAdded = { selectedMembers.add(it) })
 }
 
-// =================== ADD MEMBER DIALOG ===================
+// =================== ADD MEMBER ===================
 @Composable
-fun AddMemberDialog(
-    onDismiss: () -> Unit,
-    onMemberAdded: (Member) -> Unit
-) {
+fun AddMemberDialog(onDismiss: () -> Unit, onMemberAdded: (Member) -> Unit) {
     var name by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
-
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? -> imageUri = uri }
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { imageUri = it }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(28.dp),
-        containerColor = CreamWhite,
-        tonalElevation = 8.dp,
-        confirmButton = {},
-        dismissButton = {},
-        title = {
-            Text(
-                "🎤 Add Member",
-                fontWeight = FontWeight.Bold,
-                color = BrownDark
-            )
-        },
+        onDismissRequest = onDismiss, shape = RoundedCornerShape(24.dp), containerColor = CardWhite,
+        modifier = Modifier.cardShadow(16.dp, RoundedCornerShape(24.dp)),
+        confirmButton = {}, dismissButton = {},
+        title = { Text("Add Tag / Person", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 20.sp) },
         text = {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Photo picker
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .size(90.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                listOf(BlueLight, PinkPastel.copy(alpha = 0.5f))
-                            )
-                        )
-                        .border(3.dp, BluePrimary, CircleShape)
-                        .clickable { launcher.launch("image/*") }
+                    Modifier.size(80.dp).clip(CircleShape).background(FieldBg).bouncyClick { launcher.launch("image/*") },
+                    contentAlignment = Alignment.Center
                 ) {
-                    if (imageUri != null) {
-                        AsyncImage(
-                            model = imageUri,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(90.dp)
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(36.dp)
-                            )
-                            Text("📷", fontSize = 12.sp)
-                        }
+                    if (imageUri != null) AsyncImage(imageUri, null, Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+                    else Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Outlined.Person, null, tint = BrownLight, modifier = Modifier.size(28.dp))
+                        Text("Upload", fontSize = 10.sp, color = TextGrey)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(Modifier.height(18.dp))
 
+                Text("Name", fontSize = 12.sp, color = TextGrey, modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp))
                 OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    placeholder = { Text("ชื่อ / Name", color = BrownLight) },
-                    shape = RoundedCornerShape(50),
-                    modifier = Modifier.fillMaxWidth(),
+                    value = name, onValueChange = { name = it },
+                    placeholder = { Text("ชื่อ (ศิลปิน, เพื่อน, สถานที่...)", color = TextLight) },
+                    shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth(), singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = BluePrimary,
-                        unfocusedBorderColor = BlueLight,
-                        cursorColor = BluePrimary,
-                        focusedContainerColor = CardWhite,
-                        unfocusedContainerColor = CardWhite
+                        focusedBorderColor = BlueBright, unfocusedBorderColor = FieldBg,
+                        cursorColor = BlueBright, focusedContainerColor = FieldBg, unfocusedContainerColor = FieldBg
                     ),
-                    singleLine = true
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 15.sp, color = TextDark),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(Modifier.height(24.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = BrownLight)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    OutlinedButton(onDismiss, shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, TextLight)) {
+                        Text("Cancel", color = TextGrey)
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(Modifier.width(10.dp))
                     Button(
                         onClick = {
-                            if (name.isNotBlank()) {
-                                val newMember = AppState.addMember(
-                                    name = name,
-                                    imageUri = imageUri?.toString()
-                                )
-                                onMemberAdded(newMember)
-                                onDismiss()
-                            }
+                            if (name.isNotBlank()) { onMemberAdded(AppState.addMember(name, imageUri?.toString())); onDismiss() }
                         },
-                        shape = RoundedCornerShape(50),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = BluePrimary,
-                            contentColor = Color.White
-                        )
-                    ) {
-                        Text("✓ Save")
-                    }
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BlueBright),
+                        modifier = Modifier.cardShadow(4.dp, RoundedCornerShape(14.dp))
+                    ) { Text("Add", fontWeight = FontWeight.Bold, color = Color.White) }
                 }
             }
         }

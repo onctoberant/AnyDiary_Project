@@ -5,7 +5,8 @@ import java.time.LocalDate
 data class Member(
     val id: Int,
     val name: String,
-    val imageUri: String? = null
+    val imageUri: String? = null,
+    val isFavorite: Boolean = false
 )
 
 data class Post(
