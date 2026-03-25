@@ -2,8 +2,6 @@ package com.example.anydiaryproject
 
 import java.time.LocalDate
 
-// class kotlin = มี logic ทำงาน
-// data class เก็บข้อมูล
 data class Member(
     val id: Int,
     val name: String,
@@ -20,11 +18,7 @@ data class Post(
 data class Todo(
     val id: Int,
     val title: String,
-    val isDone: Boolean
-)
-
-data class NotificationItem(
-    val id: Int,
-    val message: String,
-    val date: String
+    val detail: String = "",
+    val date: LocalDate = LocalDate.now(),
+    val isDone: Boolean = false
 )
