@@ -128,70 +128,80 @@ fun AddTodoDialog(onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss, shape = RoundedCornerShape(24.dp), containerColor = CardWhite,
         modifier = Modifier.fillMaxWidth().cardShadow(16.dp, RoundedCornerShape(24.dp)),
-        confirmButton = {}, dismissButton = {},
-        title = { Text("Things to Remember", fontWeight = FontWeight.Bold, color = TextDark, fontSize = 20.sp) },
+        confirmButton = {},
         text = {
-            Column(Modifier.fillMaxWidth()) {
-                Text("Title", fontSize = 12.sp, color = TextGrey, modifier = Modifier.padding(bottom = 6.dp))
+            Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                // Header Row
+                Row(
+                    Modifier.fillMaxWidth(), 
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("CREATE\nREMEMBER", fontWeight = FontWeight.ExtraBold, color = TextDark, fontSize = 16.sp, lineHeight = 18.sp)
+                    
+                    // Date Button
+                    Surface(
+                        Modifier.bouncyClick { showDatePicker = true },
+                        shape = RoundedCornerShape(12.dp), color = CardWhite,
+                        border = BorderStroke(1.dp, TextLight)
+                    ) {
+                        Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.DateRange, null, tint = TextDark, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                selectedDate?.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) ?: "select a date",
+                                color = TextDark, fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    placeholder = { Text("Things to remember (e.g. concert, tickets)...", color = TextLight, fontSize = 14.sp) },
+                    placeholder = { Text("things to remember", color = TextGrey, fontSize = 13.sp) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(12.dp),
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = BlueBright, unfocusedBorderColor = FieldBg,
-                        cursorColor = BlueBright, focusedContainerColor = FieldBg, unfocusedContainerColor = FieldBg
+                        focusedBorderColor = TextLight, unfocusedBorderColor = TextLight,
+                        cursorColor = TextDark, focusedContainerColor = FieldBg.copy(alpha=0.5f), unfocusedContainerColor = FieldBg.copy(alpha=0.5f)
                     ),
                     textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TextDark),
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next)
                 )
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
 
-                Text("Details", fontSize = 12.sp, color = TextGrey, modifier = Modifier.padding(bottom = 6.dp))
                 OutlinedTextField(
                     value = detail,
                     onValueChange = { detail = it },
-                    placeholder = { Text("Details...", color = TextLight, fontSize = 14.sp) },
-                    modifier = Modifier.fillMaxWidth().height(80.dp),
-                    shape = RoundedCornerShape(14.dp),
+                    placeholder = { Text("details", color = TextGrey, fontSize = 13.sp) },
+                    modifier = Modifier.fillMaxWidth().height(120.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = BlueBright, unfocusedBorderColor = FieldBg,
-                        cursorColor = BlueBright, focusedContainerColor = FieldBg, unfocusedContainerColor = FieldBg
+                        focusedBorderColor = TextLight, unfocusedBorderColor = TextLight,
+                        cursorColor = TextDark, focusedContainerColor = FieldBg.copy(alpha=0.5f), unfocusedContainerColor = FieldBg.copy(alpha=0.5f)
                     ),
                     textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TextDark),
                     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Default)
                 )
 
-                Spacer(Modifier.height(12.dp))
-
-                Text("Due Date", fontSize = 12.sp, color = TextGrey, modifier = Modifier.padding(bottom = 6.dp))
-                Surface(modifier = Modifier.fillMaxWidth().bouncyClick { showDatePicker = true }, shape = RoundedCornerShape(14.dp), color = FieldBg) {
-                    Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.DateRange, null, tint = BlueBright, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(10.dp))
-                        Text(
-                            selectedDate?.format(DateTimeFormatter.ofPattern("dd MMM yyyy")) ?: "Select Date",
-                            color = if (selectedDate == null) TextGrey else TextDark, fontSize = 14.sp
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(24.dp))
 
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    OutlinedButton(onDismiss, shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, TextLight)) {
-                        Text("Cancel", color = TextGrey)
+                    TextButton(onClick = onDismiss) {
+                        Text("cancel", color = TextDark, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     }
-                    Spacer(Modifier.width(10.dp))
+                    Spacer(Modifier.width(12.dp))
                     Button(
                         onClick = { if (title.isNotBlank()) { AppState.addTodo(title, detail, selectedDate ?: LocalDate.now()); onDismiss() } },
-                        shape = RoundedCornerShape(14.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = BlueBright),
-                        modifier = Modifier.cardShadow(4.dp, RoundedCornerShape(14.dp))
-                    ) { Text("Add", fontWeight = FontWeight.Bold, color = Color.White) }
+                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrownDark),
+                        contentPadding = PaddingValues(horizontal = 32.dp)
+                    ) { Text("add", fontWeight = FontWeight.Bold, color = Color.White) }
                 }
             }
         }

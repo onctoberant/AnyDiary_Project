@@ -171,11 +171,12 @@ fun CalendarContent() {
                                             color = if (isSel) Color.White else TextDark
                                         )
                                         if (hasPost) {
-                                            Box(Modifier
-                                                .padding(top = 1.dp)
-                                                .size(5.dp)
-                                                .clip(CircleShape)
-                                                .background(if (isSel) Color.White else StatusRed)) {}
+                                            Icon(
+                                                Icons.Filled.Favorite, 
+                                                contentDescription = "Post", 
+                                                tint = if (isSel) Color.White else StatusRed, 
+                                                modifier = Modifier.size(10.dp).padding(top = 2.dp)
+                                            )
                                         }
                                     }
                                 }
@@ -219,7 +220,7 @@ fun CalendarContent() {
                             Modifier
                                 .fillMaxWidth()
                                 .scale(sc)
-                                .cardShadow(4.dp, RoundedCornerShape(14.dp))
+                                .cardShadow(8.dp, RoundedCornerShape(14.dp))
                                 .clickable(interactionSource = src, indication = null as androidx.compose.foundation.Indication?) { },
                             shape = RoundedCornerShape(14.dp),
                             colors = CardDefaults.cardColors(containerColor = CardWhite)
@@ -234,9 +235,9 @@ fun CalendarContent() {
                                                         .size(20.dp)
                                                         .clip(CircleShape)
                                                         .background(BlueSoft.copy(0.3f)), contentAlignment = Alignment.Center) {
-                                                        if (m.imageUri != null) AsyncImage(m.imageUri, null, Modifier
+                                                        if (m.imageUri != null) RobustImage(m.imageUri, Modifier
                                                             .size(20.dp)
-                                                            .clip(CircleShape), contentScale = ContentScale.Crop)
+                                                            .clip(CircleShape))
                                                         else Text(m.name.take(1).uppercase(), fontSize = 9.sp, fontWeight = FontWeight.Bold, color = BrownDark)
                                                     }
                                                     Spacer(Modifier.width(4.dp))
@@ -248,6 +249,14 @@ fun CalendarContent() {
                                     Spacer(Modifier.height(8.dp))
                                 }
                                 Text(post.content, color = TextDark, fontSize = 14.sp, lineHeight = 22.sp)
+                                
+                                if (post.imageUri != null) {
+                                    Spacer(Modifier.height(12.dp))
+                                    RobustImage(
+                                        post.imageUri,
+                                        Modifier.fillMaxWidth().height(180.dp).clip(RoundedCornerShape(12.dp))
+                                    )
+                                }
                             }
                         }
                     }

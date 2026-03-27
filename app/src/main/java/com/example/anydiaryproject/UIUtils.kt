@@ -26,15 +26,15 @@ import androidx.compose.ui.unit.dp
 
 // =================== COLOR PALETTE ===================
 // Primary – Muted Blue Highlight
-val BlueSoft = Color(0xFFC4D7E0)
-val BlueBright = Color(0xFF89A8B2)
+val BlueSoft = Color(0xFFE6F0FF) // ฟ้าอ่อน
+val BlueBright = Color(0xFF5581C3) // ฟ้าเข้ม
 
 // Secondary – Soft Brown Accents
 val BrownLight = Color(0xFFC8B6A6)
-val BrownDark = Color(0xFF8D7B68)
+val BrownDark = Color(0xFF39231A) // Primary Button
 
 // Background & Surface
-val BgWarm = Color(0xFFFDFBF7)       // Warm beige / light cream
+val BgWarm = Color(0xFFFFFDF6)       // Warm cream
 val CardWhite = Color(0xFFFFFFFF)
 val FieldBg = Color(0xFFF5F2EC)       // Soft cream for input fields
 
@@ -44,7 +44,7 @@ val TextGrey = Color(0xFF8C8C8C)
 val TextLight = Color(0xFFCCCCCC)
 
 // Status
-val StatusRed = Color(0xFFE5989B)
+val StatusRed = Color(0xFFFF98B9) // PinkAccent (ใช้แทน StatusRed เดิม)
 val StatusGreen = Color(0xFF90C290)
 val FavoriteStar = Color(0xFFFFD54F) // Gold star
 
@@ -77,7 +77,6 @@ fun Modifier.bouncyClick(onClick: () -> Unit): Modifier = composed {
         )
 }
 
-// =================== APP LOGO ===================
 @Composable
 fun AppLogo(modifier: Modifier = Modifier) {
     Box(
@@ -87,7 +86,7 @@ fun AppLogo(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center
     ) {
         Image(
-            painter = painterResource(id = R.drawable.logo),
+            painter = painterResource(id = R.drawable.logo_any_new),
             contentDescription = "ANY Diary",
             modifier = Modifier
                 .size(56.dp)

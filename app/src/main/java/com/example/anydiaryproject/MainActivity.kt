@@ -12,12 +12,22 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.anydiaryproject.ui.theme.AnyDiaryProjectTheme
 
+import androidx.compose.runtime.*
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        AppState.init(applicationContext)
 
         setContent {
-            HomeScreen()
+            var showSplash by remember { mutableStateOf(true) }
+
+            if (showSplash) {
+                SplashScreen { showSplash = false }
+            } else {
+                HomeScreen()
+            }
         }
     }
 }

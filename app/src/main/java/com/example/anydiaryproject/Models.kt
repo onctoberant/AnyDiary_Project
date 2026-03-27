@@ -13,7 +13,8 @@ data class Post(
     val id: Int,
     val memberIds: List<Int>,
     val content: String,
-    val date: LocalDate
+    val date: LocalDate,
+    val imageUri: String? = null
 )
 
 data class Todo(

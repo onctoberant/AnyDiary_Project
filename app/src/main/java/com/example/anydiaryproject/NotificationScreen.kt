@@ -43,7 +43,7 @@ fun NotificationContent() {
                     }
                     Spacer(Modifier.height(16.dp))
                     Text("No Alerts", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
-                    Text("Everything is caught up ✨", fontSize = 14.sp, color = TextGrey, textAlign = TextAlign.Center)
+                    // Text("Everything is caught up ✨", fontSize = 14.sp, color = TextGrey, textAlign = TextAlign.Center)
                 }
             }
             return
