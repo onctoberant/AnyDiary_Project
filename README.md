@@ -52,6 +52,8 @@ The app follows a **Minimal + Cute + Soft** design system:
 *Created for capturing moments that matter.* 🤎
 
 ----
+## FIGMA
+link : https://www.figma.com/design/YIdboCghRU0kNstAchYMrE/Mobile-Application?node-id=0-1&t=la0BPLjHZdavx0aE-1
 
 <img width="1405" height="505" alt="image" src="https://github.com/user-attachments/assets/a4a3f59e-4ad3-476d-bafc-aa71d62e5813" />
 <img width="956" height="505" alt="image" src="https://github.com/user-attachments/assets/c022d26d-47d0-4e96-8efb-3351effa3426" />
