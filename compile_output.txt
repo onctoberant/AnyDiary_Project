@@ -1,1 +1,20 @@
-Error: -classpath requires class path specification
+﻿.\gradlew.bat : Error: 
+-classpath requires 
+class path specification
+At line:1 char:1
++ .\gradlew.bat 
+compileDebugKotlin 2>&1 
+| Out-File -FilePath 
+compile_ou ...
++ ~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo      
+        : NotSpecified: 
+(Err    or: 
+-classpa...h speci    
+fication:String) [], R  
+  emoteException
+    + 
+FullyQualifiedErrorI    
+d : NativeCommandError
+ 

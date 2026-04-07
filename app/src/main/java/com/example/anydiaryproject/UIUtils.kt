@@ -48,6 +48,16 @@ val StatusRed = Color(0xFFFF98B9) // PinkAccent (ใช้แทน StatusRed �
 val StatusGreen = Color(0xFF90C290)
 val FavoriteStar = Color(0xFFFFD54F) // Gold star
 
+// Expense Mode Colors
+val ExpenseCardBg = Color(0xFFF8F6F2)      // Warm light gray
+val ExpenseBadgeBg = Color(0xFFDCE8F8)     // Light blue badge
+val ExpenseBadgeText = Color(0xFF5581C3)   // Blue text on badge
+val PastelPeach = Color(0xFFFDE8DC)        // Peach circle bg
+val PastelMint = Color(0xFFD4EDDA)         // Mint for income
+val PastelLavender = Color(0xFFE8DEF8)     // Lavender accent
+val PastelYellow = Color(0xFFFFF3CD)       // Yellow accent
+val ExpenseAmountColor = Color(0xFF2D2016) // Dark brown for amount
+
 // =================== SOFT DEPTH SHADOW ===================
 fun Modifier.cardShadow(
     elevation: Dp = 8.dp,

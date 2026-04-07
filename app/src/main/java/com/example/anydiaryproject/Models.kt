@@ -17,6 +17,13 @@ data class Post(
     val imageUri: String? = null
 )
 
+data class Expense(
+    val id: Int,
+    val amount: Double,
+    val memberId: Int? = null,
+    val date: LocalDate = LocalDate.now()
+)
+
 data class Todo(
     val id: Int,
     val title: String,

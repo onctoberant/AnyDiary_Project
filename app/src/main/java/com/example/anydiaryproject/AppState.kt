@@ -30,10 +30,12 @@ object AppState {
     val members = mutableStateListOf<Member>()
     val posts = mutableStateListOf<Post>()
     val todos = mutableStateListOf<Todo>()
+    val expenses = mutableStateListOf<Expense>()
 
     private var nextMemberId = 0
     private var nextPostId = 0
     private var nextTodoId = 0
+    private var nextExpenseId = 0
 
     private var prefs: SharedPreferences? = null
     private val gson: Gson = GsonBuilder().registerTypeAdapter(LocalDate::class.java, LocalDateAdapter()).create()
@@ -69,6 +71,14 @@ object AppState {
             todos.addAll(list)
             nextTodoId = (list.maxOfOrNull { t -> t.id } ?: -1) + 1
         }
+
+        p.getString("expenses", null)?.let {
+            val type = object : TypeToken<List<Expense>>() {}.type
+            val list: List<Expense> = gson.fromJson(it, type)
+            expenses.clear()
+            expenses.addAll(list)
+            nextExpenseId = (list.maxOfOrNull { e -> e.id } ?: -1) + 1
+        }
     }
 
     private fun saveData() {
@@ -76,6 +86,7 @@ object AppState {
             putString("members", gson.toJson(members))
             putString("posts", gson.toJson(posts))
             putString("todos", gson.toJson(todos))
+            putString("expenses", gson.toJson(expenses))
             apply()
         }
     }
@@ -95,6 +106,12 @@ object AppState {
                 posts[i] = post.copy(memberIds = post.memberIds.filter { it != member.id })
             }
         }
+        for (i in expenses.indices) {
+            val expense = expenses[i]
+            if (expense.memberId == member.id) {
+                expenses[i] = expense.copy(memberId = null)
+            }
+        }
         saveData()
     }
 
@@ -106,6 +123,18 @@ object AppState {
 
     fun deletePost(post: Post) {
         posts.remove(post)
+        saveData()
+    }
+
+    fun addExpense(amount: Double, memberId: Int?, date: LocalDate): Expense {
+        val newExpense = Expense(id = nextExpenseId++, amount = amount, memberId = memberId, date = date)
+        expenses.add(0, newExpense)
+        saveData()
+        return newExpense
+    }
+
+    fun deleteExpense(expense: Expense) {
+        expenses.remove(expense)
         saveData()
     }
 

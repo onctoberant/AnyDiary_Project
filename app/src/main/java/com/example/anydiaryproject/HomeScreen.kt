@@ -67,6 +67,8 @@ fun HomeScreen() {
     var currentPage by remember { mutableIntStateOf(0) }
     var showAddPostDialog by remember { mutableStateOf(false) }
     var showAddTodoDialog by remember { mutableStateOf(false) }
+    var showAddExpenseDialog by remember { mutableStateOf(false) }
+    var isExpenseMode by remember { mutableStateOf(false) }
 
     val notificationCount = AppState.getDueNotifications().size
 
@@ -98,7 +100,11 @@ fun HomeScreen() {
             if (currentPage == 0 || currentPage == 2) {
                 FloatingActionButton(
                     onClick = {
-                        if (currentPage == 2) showAddTodoDialog = true else showAddPostDialog = true
+                        when {
+                            currentPage == 2 -> showAddTodoDialog = true
+                            isExpenseMode -> showAddExpenseDialog = true
+                            else -> showAddPostDialog = true
+                        }
                     },
                     containerColor = BrownDark,
                     contentColor = Color.White,
@@ -123,7 +129,7 @@ fun HomeScreen() {
 
             Box(modifier = Modifier.fillMaxSize().weight(1f)) {
                 when (currentPage) {
-                    0 -> HomeContent()
+                    0 -> HomeContent(isExpenseMode = isExpenseMode, onModeChange = { isExpenseMode = it })
                     1 -> CalendarContent()
                     2 -> TodoContent()
                     3 -> NotificationContent()
@@ -134,6 +140,7 @@ fun HomeScreen() {
 
     if (showAddPostDialog) AddPostDialog { showAddPostDialog = false }
     if (showAddTodoDialog) AddTodoDialog { showAddTodoDialog = false }
+    if (showAddExpenseDialog) AddExpenseDialog { showAddExpenseDialog = false }
 }
 
 @Composable
@@ -161,9 +168,103 @@ fun NavItem(icon: ImageVector, label: String, selected: Boolean, badge: Int = 0,
     }
 }
 
+// =================== MODE TOGGLE ===================
+@Composable
+fun ModeToggle(isExpenseMode: Boolean, onModeChange: (Boolean) -> Unit) {
+    val toggleShape = RoundedCornerShape(16.dp)
+    Surface(
+        modifier = Modifier
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .fillMaxWidth(),
+        shape = toggleShape,
+        color = FieldBg,
+        shadowElevation = 0.dp
+    ) {
+        Row(
+            modifier = Modifier.padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            // Daily Memory Tab
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .bouncyClick { onModeChange(false) },
+                shape = RoundedCornerShape(12.dp),
+                color = if (!isExpenseMode) CardWhite else Color.Transparent,
+                shadowElevation = if (!isExpenseMode) 2.dp else 0.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Outlined.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = if (!isExpenseMode) BrownDark else TextGrey
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Daily Memory",
+                        fontSize = 13.sp,
+                        fontWeight = if (!isExpenseMode) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (!isExpenseMode) BrownDark else TextGrey
+                    )
+                }
+            }
+
+            // Expense Tab
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .bouncyClick { onModeChange(true) },
+                shape = RoundedCornerShape(12.dp),
+                color = if (isExpenseMode) CardWhite else Color.Transparent,
+                shadowElevation = if (isExpenseMode) 2.dp else 0.dp
+            ) {
+                Row(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Outlined.AccountBalance,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = if (isExpenseMode) BrownDark else TextGrey
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        "Expense",
+                        fontSize = 13.sp,
+                        fontWeight = if (isExpenseMode) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (isExpenseMode) BrownDark else TextGrey
+                    )
+                }
+            }
+        }
+    }
+}
+
 // =================== HOME CONTENT ===================
 @Composable
-fun HomeContent() {
+fun HomeContent(isExpenseMode: Boolean, onModeChange: (Boolean) -> Unit) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Mode Toggle
+        ModeToggle(isExpenseMode = isExpenseMode, onModeChange = onModeChange)
+
+        // Content based on mode
+        if (isExpenseMode) {
+            ExpenseContent()
+        } else {
+            DailyMemoryContent()
+        }
+    }
+}
+
+@Composable
+fun DailyMemoryContent() {
     val posts = AppState.posts
     val favorites = AppState.members.filter { it.isFavorite }
 
@@ -210,7 +311,6 @@ fun HomeContent() {
                         }
                         Spacer(Modifier.height(16.dp))
                         Text("No Memories Yet", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextDark)
-                        // Text("Start capturing your artist moments", fontSize = 14.sp, color = TextGrey)
                     }
                 }
             }
@@ -418,8 +518,11 @@ fun AddPostDialog(onDismiss: () -> Unit) {
                             focusedBorderColor = TextLight, unfocusedBorderColor = TextLight,
                             cursorColor = TextDark, focusedContainerColor = CardWhite, unfocusedContainerColor = CardWhite
                         ),
-                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TextDark, lineHeight = 22.sp),
-                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Default)
+                        textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TextDark, lineHeight = 26.sp),
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            imeAction = ImeAction.Default,
+                            autoCorrectEnabled = false
+                        )
                     )
                     
                     if (selectedImageUri != null) {
@@ -635,8 +738,11 @@ fun AddMemberDialog(onDismiss: () -> Unit, onMemberAdded: (Member) -> Unit) {
                         focusedBorderColor = TextLight, unfocusedBorderColor = TextLight,
                         cursorColor = TextDark, focusedContainerColor = CardWhite, unfocusedContainerColor = CardWhite
                     ),
-                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TextDark),
-                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done)
+                    textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = TextDark, lineHeight = 26.sp),
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done,
+                        autoCorrectEnabled = false
+                    )
                 )
 
                 Spacer(Modifier.height(32.dp))
@@ -658,4 +764,607 @@ fun AddMemberDialog(onDismiss: () -> Unit, onMemberAdded: (Member) -> Unit) {
             }
         }
     )
+}
+
+// =================== EXPENSE CONTENT ===================
+@Composable
+fun ExpenseContent() {
+    val expenses = AppState.expenses
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 20.dp, top = 8.dp, end = 20.dp, bottom = 100.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        if (expenses.isNotEmpty()) {
+            items(expenses, key = { it.id }) { expense ->
+                ExpenseCard(expense = expense)
+            }
+        } else {
+            item {
+                Box(
+                    Modifier
+                        .fillParentMaxHeight(0.6f)
+                        .fillParentMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            Modifier
+                                .size(72.dp)
+                                .background(PastelPeach.copy(0.4f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Outlined.AccountBalance,
+                                null,
+                                tint = BrownDark.copy(alpha = 0.5f),
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                        Spacer(Modifier.height(20.dp))
+                        Text(
+                            "No Expenses Yet",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextDark
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "Tap + to add your first expense",
+                            fontSize = 13.sp,
+                            color = TextGrey
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// =================== EXPENSE CARD ===================
+@Composable
+fun ExpenseCard(expense: Expense, modifier: Modifier = Modifier) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(if (isPressed) 0.98f else 1f, label = "es")
+
+    // Resolve member from shared data
+    val member = remember(expense.memberId, AppState.members.size) {
+        expense.memberId?.let { id -> AppState.members.find { it.id == id } }
+    }
+
+    // Pastel colors for member avatar background
+    val avatarColors = listOf(
+        PastelPeach, PastelMint, PastelLavender, PastelYellow,
+        Color(0xFFD4E4F7), Color(0xFFFCE4EC), Color(0xFFE8F5E9)
+    )
+    val avatarBg = remember(expense.memberId) {
+        avatarColors[(expense.memberId ?: 0).mod(avatarColors.size)]
+    }
+
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .scale(scale)
+            .cardShadow(if (isPressed) 6.dp else 3.dp, RoundedCornerShape(20.dp)),
+        shape = RoundedCornerShape(20.dp),
+        color = CardWhite
+    ) {
+        Row(
+            modifier = Modifier
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null as androidx.compose.foundation.Indication?
+                ) { }
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Left: Member Avatar
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(avatarBg),
+                contentAlignment = Alignment.Center
+            ) {
+                if (member?.imageUri != null) {
+                    RobustImage(member.imageUri, Modifier.fillMaxSize().clip(CircleShape))
+                } else if (member != null) {
+                    Text(
+                        member.name.take(1).uppercase(),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BrownDark.copy(alpha = 0.7f)
+                    )
+                } else {
+                    Icon(
+                        Icons.Outlined.Person,
+                        contentDescription = null,
+                        tint = BrownDark.copy(alpha = 0.4f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+
+            Spacer(Modifier.width(14.dp))
+
+            // Center: Amount + Member name + Date
+            Column(modifier = Modifier.weight(1f)) {
+                // Amount - prominent
+                Text(
+                    text = "${String.format("%,.0f", expense.amount)}฿",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = ExpenseAmountColor
+                )
+
+                Spacer(Modifier.height(2.dp))
+
+                // Member name
+                Text(
+                    text = if (member != null) "with ${member.name}" else "personal",
+                    fontSize = 13.sp,
+                    color = TextGrey,
+                    fontWeight = FontWeight.Normal,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(Modifier.height(6.dp))
+
+                // Date
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val today = LocalDate.now()
+                    val isToday = expense.date == today
+                    if (isToday) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = ExpenseBadgeBg
+                        ) {
+                            Text(
+                                "Today",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = ExpenseBadgeText
+                            )
+                        }
+                        Spacer(Modifier.width(6.dp))
+                    }
+                    Text(
+                        text = expense.date.format(DateTimeFormatter.ofPattern("dd MMM")),
+                        fontSize = 12.sp,
+                        color = TextGrey
+                    )
+                }
+            }
+
+            // Right: Delete
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFFFF0F0), CircleShape)
+                    .clickable { AppState.deleteExpense(expense) },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Outlined.Delete,
+                    contentDescription = "Delete",
+                    tint = Color(0xFFE57373),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+    }
+}
+
+// =================== ADD EXPENSE DIALOG ===================
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AddExpenseDialog(onDismiss: () -> Unit) {
+    var amountText by remember { mutableStateOf("") }
+    var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showMemberSelector by remember { mutableStateOf(false) }
+    var selectedMember by remember { mutableStateOf<Member?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        shape = RoundedCornerShape(24.dp),
+        containerColor = CardWhite,
+        tonalElevation = 0.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .cardShadow(16.dp, RoundedCornerShape(24.dp)),
+        confirmButton = {},
+        dismissButton = {},
+        text = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+            ) {
+                // Header Row
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "ADD\nEXPENSE",
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextDark,
+                        fontSize = 16.sp,
+                        lineHeight = 18.sp
+                    )
+
+                    // Date Button
+                    Surface(
+                        Modifier.bouncyClick { showDatePicker = true },
+                        shape = RoundedCornerShape(12.dp),
+                        color = CardWhite,
+                        border = BorderStroke(1.dp, TextLight)
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Outlined.DateRange,
+                                null,
+                                tint = TextDark,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                if (selectedDate == LocalDate.now()) "select a date"
+                                else selectedDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
+                                color = TextDark,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
+
+                // Amount Input
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = { newValue ->
+                        if (newValue.isEmpty() || newValue.matches(Regex("^\\d*\\.?\\d*$"))) {
+                            amountText = newValue
+                        }
+                    },
+                    placeholder = { Text("0", color = TextGrey, fontSize = 24.sp, fontWeight = FontWeight.Bold) },
+                    label = { Text("Amount (฿)", fontSize = 12.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BrownLight,
+                        unfocusedBorderColor = TextLight,
+                        cursorColor = TextDark,
+                        focusedContainerColor = CardWhite,
+                        unfocusedContainerColor = CardWhite,
+                        focusedLabelColor = BrownDark,
+                        unfocusedLabelColor = TextGrey
+                    ),
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        fontSize = 24.sp,
+                        color = ExpenseAmountColor,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal,
+                        imeAction = ImeAction.Done
+                    )
+                )
+
+                Spacer(Modifier.height(18.dp))
+
+                // Member Selector Button (shared member data)
+                Surface(
+                    Modifier.fillMaxWidth().bouncyClick { showMemberSelector = true },
+                    shape = RoundedCornerShape(14.dp),
+                    color = CardWhite,
+                    border = BorderStroke(1.dp, TextLight)
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Member avatar preview
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(if (selectedMember != null) PastelLavender else FieldBg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (selectedMember?.imageUri != null) {
+                                RobustImage(selectedMember!!.imageUri, Modifier.fillMaxSize().clip(CircleShape))
+                            } else if (selectedMember != null) {
+                                Text(
+                                    selectedMember!!.name.take(1).uppercase(),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrownDark.copy(alpha = 0.7f)
+                                )
+                            } else {
+                                Icon(
+                                    Icons.Outlined.Person,
+                                    null,
+                                    tint = TextGrey,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Text(
+                            if (selectedMember != null) selectedMember!!.name else "select member",
+                            color = if (selectedMember != null) TextDark else TextGrey,
+                            fontSize = 14.sp,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Icon(
+                            Icons.Outlined.KeyboardArrowDown,
+                            null,
+                            tint = TextGrey,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(28.dp))
+
+                // Action Buttons
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) {
+                        Text(
+                            "cancel",
+                            color = TextDark,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    Spacer(Modifier.width(12.dp))
+                    Button(
+                        onClick = {
+                            val amount = amountText.toDoubleOrNull()
+                            if (amount != null && amount > 0) {
+                                AppState.addExpense(
+                                    amount = amount,
+                                    memberId = selectedMember?.id,
+                                    date = selectedDate
+                                )
+                                onDismiss()
+                            }
+                        },
+                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrownDark),
+                        contentPadding = PaddingValues(horizontal = 32.dp)
+                    ) {
+                        Text("save", color = CardWhite, fontSize = 14.sp)
+                    }
+                }
+            }
+        }
+    )
+
+    if (showDatePicker) {
+        val state = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    state.selectedDateMillis?.let {
+                        selectedDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK", color = BlueBright, fontWeight = FontWeight.Bold)
+                }
+            },
+            colors = DatePickerDefaults.colors(containerColor = CardWhite)
+        ) {
+            DatePicker(
+                state,
+                colors = DatePickerDefaults.colors(selectedDayContainerColor = BlueBright)
+            )
+        }
+    }
+
+    // Expense Member Selector (single-select, reuses shared Member data)
+    if (showMemberSelector) {
+        ExpenseMemberSelectorDialog(
+            members = AppState.members,
+            selectedMember = selectedMember,
+            onMemberSelected = { selectedMember = it },
+            onDismiss = { showMemberSelector = false }
+        )
+    }
+}
+
+// =================== EXPENSE MEMBER SELECTOR (Single-Select) ===================
+@Composable
+fun ExpenseMemberSelectorDialog(
+    members: List<Member>,
+    selectedMember: Member?,
+    onMemberSelected: (Member?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var showAdd by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = CardWhite,
+        shape = RoundedCornerShape(24.dp),
+        modifier = Modifier.cardShadow(16.dp, RoundedCornerShape(24.dp)),
+        confirmButton = {},
+        text = {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 200.dp, max = 450.dp)
+                    .padding(top = 8.dp)
+            ) {
+                // Header
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "SELECT\nMEMBER",
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextDark,
+                        fontSize = 16.sp,
+                        lineHeight = 18.sp
+                    )
+                    Surface(
+                        onClick = { showAdd = true },
+                        shape = CircleShape,
+                        color = CardWhite,
+                        border = BorderStroke(1.dp, TextLight),
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(Icons.Default.Add, null, tint = TextDark, modifier = Modifier.padding(8.dp))
+                    }
+                }
+
+                Spacer(Modifier.height(20.dp))
+
+                // "None" option
+                Surface(
+                    Modifier.fillMaxWidth().bouncyClick {
+                        onMemberSelected(null)
+                        onDismiss()
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    color = CardWhite,
+                    border = BorderStroke(1.dp, if (selectedMember == null) BrownDark else TextLight)
+                ) {
+                    Row(
+                        Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(if (selectedMember == null) BrownDark else CardWhite)
+                                .border(
+                                    1.dp,
+                                    if (selectedMember == null) BrownDark else TextLight,
+                                    CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (selectedMember == null) {
+                                Icon(Icons.Default.Check, null, tint = CardWhite, modifier = Modifier.size(16.dp))
+                            }
+                        }
+                        Spacer(Modifier.width(14.dp))
+                        Box(
+                            Modifier.size(32.dp).clip(CircleShape).background(FieldBg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Outlined.Person, null, tint = TextGrey, modifier = Modifier.size(18.dp))
+                        }
+                        Spacer(Modifier.width(14.dp))
+                        Text("Personal (no member)", color = TextGrey, fontSize = 14.sp)
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                // Members List
+                if (members.isEmpty()) {
+                    Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                        Text("No Members", color = TextGrey, fontSize = 14.sp)
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.weight(1f, false)
+                    ) {
+                        items(members) { member ->
+                            val isSel = selectedMember?.id == member.id
+                            Surface(
+                                Modifier.fillMaxWidth().bouncyClick {
+                                    onMemberSelected(member)
+                                    onDismiss()
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                color = CardWhite,
+                                border = BorderStroke(1.dp, if (isSel) BrownDark else TextLight)
+                            ) {
+                                Row(
+                                    Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Check
+                                    Box(
+                                        Modifier
+                                            .size(24.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isSel) BrownDark else CardWhite)
+                                            .border(1.dp, if (isSel) BrownDark else TextLight, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (isSel) Icon(Icons.Default.Check, null, tint = CardWhite, modifier = Modifier.size(16.dp))
+                                    }
+                                    Spacer(Modifier.width(14.dp))
+                                    // Avatar
+                                    Box(
+                                        Modifier.size(32.dp).clip(CircleShape).background(PastelLavender.copy(0.5f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (member.imageUri != null) {
+                                            RobustImage(member.imageUri, Modifier.fillMaxSize().clip(CircleShape))
+                                        } else {
+                                            Text(
+                                                member.name.take(1).uppercase(),
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = BrownDark.copy(alpha = 0.7f)
+                                            )
+                                        }
+                                    }
+                                    Spacer(Modifier.width(14.dp))
+                                    Text(member.name, color = TextDark, fontSize = 15.sp, modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                // Cancel
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = onDismiss) {
+                        Text("cancel", color = TextDark, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    }
+                }
+            }
+        }
+    )
+
+    if (showAdd) {
+        AddMemberDialog(
+            onDismiss = { showAdd = false },
+            onMemberAdded = { newMember ->
+                onMemberSelected(newMember)
+            }
+        )
+    }
 }
