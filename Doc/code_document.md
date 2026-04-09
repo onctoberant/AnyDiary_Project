@@ -1,9 +1,4 @@
-# 📖 AnyDiary — Code Documentation
-
-> แต่ละส่วนของโค้ดทำงานอะไร — อธิบายทุก file, function, component
-
----
-
+# Code Documentation
 ## Table of Contents
 
 1. [Models.kt — Data Classes](#1-modelskt--data-classes)
@@ -142,8 +137,6 @@ Expense-specific:
 ---
 
 ## 6. HomeScreen.kt — Main Content Hub
-
-ไฟล์ใหญ่ที่สุด (~1,371 บรรทัด) เก็บ component ทั้งหมดของหน้าหลัก:
 
 ### Top-Level Components
 
