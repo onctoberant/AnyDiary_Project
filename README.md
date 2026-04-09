@@ -1,12 +1,10 @@
-# AnyDiary (Any.) 📔
-
-<img width="1405" height="505" alt="image" src="https://github.com/user-attachments/assets/a4a3f59e-4ad3-476d-bafc-aa71d62e5813" />
+# AnyDiary (Any.)
 
 **AnyDiary** is a minimalist, warm-toned Android application for capturing daily life moments, tracking expenses, and managing personal to-do lists. Designed with a **"Soft & Cute"** aesthetic, it targets users who want to journal memories — especially concert and artist experiences — while keeping finances and schedules in one cozy place.
 
 ---
 
-## 🎯 Project Overview
+## Project Overview
 
 AnyDiary serves as a comprehensive personal diary application that combines three core functionalities into a single, beautifully designed interface:
 
@@ -14,47 +12,45 @@ AnyDiary serves as a comprehensive personal diary application that combines thre
 2. **Expense Tracking** — Log spending amounts linked to specific members, with a clean card-based list view.
 3. **Todo / Remember List** — Manage tasks and schedules with due-date awareness, status tracking, and overdue alert notifications.
 
-All data is persisted locally on the device using SharedPreferences + Gson serialization, ensuring privacy and offline availability.
-
 ---
 
-## ✨ Features
+## Features
 
-### 📝 Daily Memory Mode
+### Daily Memory Mode
 - Create posts with rich text content and image attachments
 - Tag multiple **Members** (artists, friends, etc.) per post
 - Photo picker with persistent internal storage (images never disappear)
 - Feed-style scrollable list of memory cards
 - **Favorite Members** row — quick-access strip for starred members
 
-### 💰 Expense Mode
+### Expense Mode
 - Toggle between Daily Memory and Expense modes on the Home screen
 - Log expenses with amount (฿) and optional member association  
 - Single-member selector for expenses (shared with Diary members)
 - Clean card layout showing amount, member avatar, date, and "Today" badge
 - Delete expenses with one tap
 
-### 📅 Calendar View
+### Calendar View
 - Interactive monthly calendar with navigation arrows
-- Dates containing posts are marked with ❤️ heart icons
+- Dates containing posts are marked with heart icons
 - Tap any date to view that day's memory posts below
 - Filter posts by member using horizontal chip selectors
-- Member avatars with favorite star (⭐) indicators
+- Member avatars with favorite star indicators
 
-### ✅ Todo / Remember List
+### Todo / Remember List
 - Create tasks with title, detail text, and due date
 - Toggle completion status with animated checkbox
 - Automatic categorization: **Pending** vs **Completed** sections
 - Status badges: `Today`, `Upcoming`, `Overdue`, `Completed`
 - Strikethrough styling for completed items
 
-### 🔔 Smart Notifications
+### Smart Notifications
 - Automatic detection of overdue and due-today tasks
 - Badge counter on the Alerts tab in the bottom navigation
 - Quick "Mark as Done" action directly from the alert card
 - Visual differentiation: red for overdue, blue for due-today
 
-### 🎨 Design & UX
+### Design & UX
 - **Warm cream background** with soft card shadows
 - **Bouncy click animations** for interactive elements
 - **Material 3** components with custom warm-toned theming
@@ -63,7 +59,7 @@ All data is persisted locally on the device using SharedPreferences + Gson seria
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Category | Technology | Details |
 |---|---|---|
@@ -80,7 +76,7 @@ All data is persisted locally on the device using SharedPreferences + Gson seria
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 app/src/main/java/com/example/anydiaryproject/
@@ -105,7 +101,7 @@ app/src/main/java/com/example/anydiaryproject/
 
 ---
 
-## 🎨 Design System
+## Design System
 
 ### Color Palette
 
@@ -132,7 +128,7 @@ app/src/main/java/com/example/anydiaryproject/
 
 ---
 
-## 📊 Data Models
+## Data Models
 
 ### Member
 ```kotlin
@@ -178,7 +174,7 @@ data class Todo(
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - **Android Studio** (Arctic Fox or newer recommended)
@@ -204,7 +200,7 @@ data class Todo(
 
 ---
 
-## 🔗 Figma Design
+## Figma Design 
 
 Link: [Figma — Mobile Application Design](https://www.figma.com/design/YIdboCghRU0kNstAchYMrE/Mobile-Application?node-id=0-1&t=la0BPLjHZdavx0aE-1)
 
@@ -212,16 +208,3 @@ Link: [Figma — Mobile Application Design](https://www.figma.com/design/YIdboCg
 <img width="956" height="505" alt="image" src="https://github.com/user-attachments/assets/c022d26d-47d0-4e96-8efb-3351effa3426" />
 <img width="1142" height="496" alt="image" src="https://github.com/user-attachments/assets/51d6919f-aac0-424f-b126-70456aa99921" />
 
----
-
-## 📖 Documentation
-
-For detailed documentation on each file's code and component responsibilities, see:
-- **[Wireframe & Flow Documentation](docs/WIREFRAME.md)** — All screen layouts and interaction flows
-- **[Code Documentation](docs/CODE_DOCUMENTATION.md)** — File-by-file breakdown of every function and component
-
----
-
-## 📄 License
-
-This project is developed for educational purposes.
