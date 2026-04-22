@@ -21,7 +21,7 @@
 |---|---|---|
 | `Member` | เก็บข้อมูลสมาชิก (ศิลปิน, เพื่อน) | `id`, `name`, `imageUri`, `isFavorite` |
 | `Post` | เก็บ memory/diary post | `id`, `memberIds` (หลายคน), `content`, `date`, `imageUri` |
-| `Expense` | เก็บรายจ่าย | `id`, `amount`, `memberId` (คนเดียว/null), `date` |
+| `Expense` | เก็บรายจ่าย | `id`, `title`, `amount`, `memberIds` (หลายคน), `date` |
 | `Todo` | เก็บ task/to-do item | `id`, `title`, `detail`, `date`, `isDone` |
 
 > **Note**: `Member` ถูกใช้ร่วมกัน (shared) ระหว่างโหมด Daily Memory และ Expense — ข้อมูลสมาชิกเป็น pool เดียวกัน
@@ -103,7 +103,7 @@ Expense-specific:
 | `deleteMember(member)` | ลบ Member + ลบ reference จาก posts/expenses → save |
 | `addPost(...)` | สร้าง Post ใหม่ → เพิ่มที่ตำแหน่ง 0 (ใหม่อยู่บน) → save |
 | `deletePost(post)` | ลบ Post → save |
-| `addExpense(...)` | สร้าง Expense ใหม่ → เพิ่มที่ตำแหน่ง 0 → save |
+| `addExpense(title, amount, memberIds, date)` | สร้าง Expense ใหม่ (พร้อมชื่อรายการ + สมาชิกหลายคน) → เพิ่มที่ตำแหน่ง 0 → save |
 | `deleteExpense(expense)` | ลบ Expense → save |
 | `addTodo(...)` | สร้าง Todo ใหม่ → save |
 | `toggleTodo(todo)` | สลับ isDone → save |
@@ -138,6 +138,11 @@ Expense-specific:
 
 ## 6. HomeScreen.kt — Main Content Hub
 
+<<<<<<< HEAD
+=======
+ไฟล์ใหญ่ที่สุด (~1,500 บรรทัด) เก็บ component ทั้งหมดของหน้าหลัก:
+
+>>>>>>> cfb1253 (add readme.md)
 ### Top-Level Components
 
 | Component | หน้าที่ |
@@ -162,15 +167,15 @@ Expense-specific:
 | `AddPostDialog(onDismiss)` | Dialog สร้าง post ใหม่ — เลือก date, member, พิมพ์ content, แนบรูป |
 | `MemberSelectorDialog(...)` | Dialog เลือกสมาชิก **หลายคน** (multi-select) — มีปุ่ม + เพิ่มสมาชิกใหม่ |
 | `AddMemberDialog(...)` | Dialog เพิ่มสมาชิกใหม่ — ใส่ชื่อ + เลือกรูปโปรไฟล์ |
-| `AddExpenseDialog(onDismiss)` | Dialog เพิ่มรายจ่าย — ใส่จำนวนเงิน, เลือก date, เลือก member |
-| `ExpenseMemberSelectorDialog(...)` | Dialog เลือกสมาชิก **คนเดียว** (single-select) — มี "Personal" option |
+| `AddExpenseDialog(onDismiss)` | Dialog เพิ่มรายจ่าย — ใส่ชื่อรายการ (title), จำนวนเงิน (฿), เลือก date, เลือกสมาชิกหลายคน |
+| `ExpenseMemberSelectorDialog(...)` | Dialog เลือกสมาชิก **หลายคน** (multi-select) — พร้อมปุ่ม clear + ปุ่มเพิ่มสมาชิกใหม่ |
 
 ### Expense Components
 
 | Component | หน้าที่ |
 |---|---|
 | `ExpenseContent()` | LazyColumn ของ Expense cards + empty state |
-| `ExpenseCard(expense)` | Card แต่ละรายจ่าย — avatar (pastel สี), amount, member name, date, delete |
+| `ExpenseCard(expense)` | Card แต่ละรายจ่าย — stacked avatar สำหรับสมาชิกหลายคน (pastel สี), ชื่อรายการ (title), จำนวนเงิน, member names, date + "Today" badge, delete |
 
 ### Image Handling Pattern
 
