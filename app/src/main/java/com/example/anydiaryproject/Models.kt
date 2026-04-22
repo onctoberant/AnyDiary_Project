@@ -19,8 +19,9 @@ data class Post(
 
 data class Expense(
     val id: Int,
+    val title: String = "",
     val amount: Double,
-    val memberId: Int? = null,
+    val memberIds: List<Int> = emptyList(),
     val date: LocalDate = LocalDate.now()
 )
 

@@ -5,9 +5,11 @@ import android.content.SharedPreferences
 import androidx.compose.runtime.mutableStateListOf
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
+import com.google.gson.JsonArray
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
+import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
@@ -25,6 +27,32 @@ class LocalDateAdapter : JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> 
     }
 }
 
+// Handles backward compatibility: converts legacy "memberId" (single) to "memberIds" (list)
+class ExpenseDeserializer : JsonDeserializer<Expense> {
+    override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Expense {
+        val obj = json.asJsonObject
+        val id = obj.get("id")?.asInt ?: 0
+        val title = obj.get("title")?.asString ?: ""
+        val amount = obj.get("amount")?.asDouble ?: 0.0
+        val date: LocalDate = if (obj.has("date")) {
+            context.deserialize(obj.get("date"), LocalDate::class.java)
+        } else LocalDate.now()
+
+        // Handle legacy "memberId" -> new "memberIds"
+        val memberIds: List<Int> = when {
+            obj.has("memberIds") && obj.get("memberIds").isJsonArray -> {
+                obj.getAsJsonArray("memberIds").map { it.asInt }
+            }
+            obj.has("memberId") && !obj.get("memberId").isJsonNull -> {
+                listOf(obj.get("memberId").asInt)
+            }
+            else -> emptyList()
+        }
+
+        return Expense(id = id, title = title, amount = amount, memberIds = memberIds, date = date)
+    }
+}
+
 object AppState {
 
     val members = mutableStateListOf<Member>()
@@ -38,7 +66,10 @@ object AppState {
     private var nextExpenseId = 0
 
     private var prefs: SharedPreferences? = null
-    private val gson: Gson = GsonBuilder().registerTypeAdapter(LocalDate::class.java, LocalDateAdapter()).create()
+    private val gson: Gson = GsonBuilder()
+        .registerTypeAdapter(LocalDate::class.java, LocalDateAdapter())
+        .registerTypeAdapter(Expense::class.java, ExpenseDeserializer())
+        .create()
 
     fun init(context: Context) {
         if (prefs != null) return
@@ -108,8 +139,8 @@ object AppState {
         }
         for (i in expenses.indices) {
             val expense = expenses[i]
-            if (expense.memberId == member.id) {
-                expenses[i] = expense.copy(memberId = null)
+            if (expense.memberIds.contains(member.id)) {
+                expenses[i] = expense.copy(memberIds = expense.memberIds.filter { it != member.id })
             }
         }
         saveData()
@@ -126,8 +157,8 @@ object AppState {
         saveData()
     }
 
-    fun addExpense(amount: Double, memberId: Int?, date: LocalDate): Expense {
-        val newExpense = Expense(id = nextExpenseId++, amount = amount, memberId = memberId, date = date)
+    fun addExpense(title: String, amount: Double, memberIds: List<Int>, date: LocalDate): Expense {
+        val newExpense = Expense(id = nextExpenseId++, title = title, amount = amount, memberIds = memberIds, date = date)
         expenses.add(0, newExpense)
         saveData()
         return newExpense

@@ -829,9 +829,9 @@ fun ExpenseCard(expense: Expense, modifier: Modifier = Modifier) {
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(if (isPressed) 0.98f else 1f, label = "es")
 
-    // Resolve member from shared data
-    val member = remember(expense.memberId, AppState.members.size) {
-        expense.memberId?.let { id -> AppState.members.find { it.id == id } }
+    // Resolve members from shared data
+    val members = remember(expense.memberIds, AppState.members.size) {
+        expense.memberIds.mapNotNull { id -> AppState.members.find { it.id == id } }
     }
 
     // Pastel colors for member avatar background
@@ -839,9 +839,6 @@ fun ExpenseCard(expense: Expense, modifier: Modifier = Modifier) {
         PastelPeach, PastelMint, PastelLavender, PastelYellow,
         Color(0xFFD4E4F7), Color(0xFFFCE4EC), Color(0xFFE8F5E9)
     )
-    val avatarBg = remember(expense.memberId) {
-        avatarColors[(expense.memberId ?: 0).mod(avatarColors.size)]
-    }
 
     Surface(
         modifier = modifier
@@ -860,37 +857,83 @@ fun ExpenseCard(expense: Expense, modifier: Modifier = Modifier) {
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left: Member Avatar
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(avatarBg),
-                contentAlignment = Alignment.Center
-            ) {
-                if (member?.imageUri != null) {
-                    RobustImage(member.imageUri, Modifier.fillMaxSize().clip(CircleShape))
-                } else if (member != null) {
-                    Text(
-                        member.name.take(1).uppercase(),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BrownDark.copy(alpha = 0.7f)
-                    )
-                } else {
+            // Left: Member Avatars (overlapping like PostCard)
+            if (members.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy((-8).dp)) {
+                    members.take(3).forEach { m ->
+                        val bg = avatarColors[m.id.mod(avatarColors.size)]
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(bg)
+                                .border(1.5.dp, CardWhite, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (m.imageUri != null) {
+                                RobustImage(m.imageUri, Modifier.fillMaxSize().clip(CircleShape))
+                            } else {
+                                Text(
+                                    m.name.take(1).uppercase(),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrownDark.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                    if (members.size > 3) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(FieldBg)
+                                .border(1.5.dp, CardWhite, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "+${members.size - 3}",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextGrey
+                            )
+                        }
+                    }
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(FieldBg),
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
                         Icons.Outlined.Person,
                         contentDescription = null,
                         tint = BrownDark.copy(alpha = 0.4f),
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
 
             Spacer(Modifier.width(14.dp))
 
-            // Center: Amount + Member name + Date
+            // Center: Title + Amount + Members + Date
             Column(modifier = Modifier.weight(1f)) {
+                // Title (if present)
+                if (expense.title.isNotBlank()) {
+                    Text(
+                        text = expense.title,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextDark,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(Modifier.height(2.dp))
+                }
+
                 // Amount - prominent
                 Text(
                     text = "${String.format("%,.0f", expense.amount)}฿",
@@ -901,9 +944,9 @@ fun ExpenseCard(expense: Expense, modifier: Modifier = Modifier) {
 
                 Spacer(Modifier.height(2.dp))
 
-                // Member name
+                // Member names
                 Text(
-                    text = if (member != null) "with ${member.name}" else "personal",
+                    text = if (members.isNotEmpty()) "with ${members.joinToString(", ") { it.name }}" else "personal",
                     fontSize = 13.sp,
                     color = TextGrey,
                     fontWeight = FontWeight.Normal,
@@ -964,11 +1007,12 @@ fun ExpenseCard(expense: Expense, modifier: Modifier = Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddExpenseDialog(onDismiss: () -> Unit) {
+    var titleText by remember { mutableStateOf("") }
     var amountText by remember { mutableStateOf("") }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var showDatePicker by remember { mutableStateOf(false) }
     var showMemberSelector by remember { mutableStateOf(false) }
-    var selectedMember by remember { mutableStateOf<Member?>(null) }
+    val selectedMembers = remember { mutableStateListOf<Member>() }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1028,7 +1072,37 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
                     }
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(20.dp))
+
+                // Title Input
+                OutlinedTextField(
+                    value = titleText,
+                    onValueChange = { titleText = it },
+                    placeholder = { Text("e.g. กินข้าวกับเพื่อน", color = TextGrey, fontSize = 13.sp) },
+                    label = { Text("Title", fontSize = 12.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BrownLight,
+                        unfocusedBorderColor = TextLight,
+                        cursorColor = TextDark,
+                        focusedContainerColor = CardWhite,
+                        unfocusedContainerColor = CardWhite,
+                        focusedLabelColor = BrownDark,
+                        unfocusedLabelColor = TextGrey
+                    ),
+                    textStyle = androidx.compose.ui.text.TextStyle(
+                        fontSize = 14.sp,
+                        color = TextDark
+                    ),
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Next,
+                        autoCorrectEnabled = false
+                    )
+                )
+
+                Spacer(Modifier.height(14.dp))
 
                 // Amount Input
                 OutlinedTextField(
@@ -1063,9 +1137,9 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
                     )
                 )
 
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(14.dp))
 
-                // Member Selector Button (shared member data)
+                // Member Selector Button (multi-select)
                 Surface(
                     Modifier.fillMaxWidth().bouncyClick { showMemberSelector = true },
                     shape = RoundedCornerShape(14.dp),
@@ -1076,43 +1150,84 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
                         Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Member avatar preview
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(if (selectedMember != null) PastelLavender else FieldBg),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (selectedMember?.imageUri != null) {
-                                RobustImage(selectedMember!!.imageUri, Modifier.fillMaxSize().clip(CircleShape))
-                            } else if (selectedMember != null) {
-                                Text(
-                                    selectedMember!!.name.take(1).uppercase(),
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = BrownDark.copy(alpha = 0.7f)
-                                )
-                            } else {
-                                Icon(
-                                    Icons.Outlined.Person,
-                                    null,
-                                    tint = TextGrey,
-                                    modifier = Modifier.size(18.dp)
-                                )
+                        // Member avatars preview (overlapping)
+                        if (selectedMembers.isNotEmpty()) {
+                            Row(horizontalArrangement = Arrangement.spacedBy((-6).dp)) {
+                                selectedMembers.take(3).forEach { m ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(PastelLavender)
+                                            .border(1.dp, CardWhite, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (m.imageUri != null) {
+                                            RobustImage(m.imageUri, Modifier.fillMaxSize().clip(CircleShape))
+                                        } else {
+                                            Text(
+                                                m.name.take(1).uppercase(),
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = BrownDark.copy(alpha = 0.7f)
+                                            )
+                                        }
+                                    }
+                                }
+                                if (selectedMembers.size > 3) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(FieldBg)
+                                            .border(1.dp, CardWhite, CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            "+${selectedMembers.size - 3}",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextGrey
+                                        )
+                                    }
+                                }
                             }
+                        } else {
+                            Icon(
+                                Icons.Outlined.Person,
+                                null,
+                                tint = TextGrey,
+                                modifier = Modifier.size(22.dp)
+                            )
                         }
 
                         Spacer(Modifier.width(12.dp))
 
                         Text(
-                            if (selectedMember != null) selectedMember!!.name else "select member",
-                            color = if (selectedMember != null) TextDark else TextGrey,
+                            if (selectedMembers.isNotEmpty()) selectedMembers.joinToString(", ") { it.name } else "select members",
+                            color = if (selectedMembers.isNotEmpty()) TextDark else TextGrey,
                             fontSize = 14.sp,
                             modifier = Modifier.weight(1f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+
+                        // Badge showing count
+                        if (selectedMembers.isNotEmpty()) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = BrownDark.copy(alpha = 0.1f)
+                            ) {
+                                Text(
+                                    "${selectedMembers.size}",
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BrownDark
+                                )
+                            }
+                            Spacer(Modifier.width(4.dp))
+                        }
 
                         Icon(
                             Icons.Outlined.KeyboardArrowDown,
@@ -1123,7 +1238,7 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
                     }
                 }
 
-                Spacer(Modifier.height(28.dp))
+                Spacer(Modifier.height(24.dp))
 
                 // Action Buttons
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
@@ -1141,8 +1256,9 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
                             val amount = amountText.toDoubleOrNull()
                             if (amount != null && amount > 0) {
                                 AppState.addExpense(
+                                    title = titleText.trim(),
                                     amount = amount,
-                                    memberId = selectedMember?.id,
+                                    memberIds = selectedMembers.map { it.id },
                                     date = selectedDate
                                 )
                                 onDismiss()
@@ -1182,23 +1298,21 @@ fun AddExpenseDialog(onDismiss: () -> Unit) {
         }
     }
 
-    // Expense Member Selector (single-select, reuses shared Member data)
+    // Expense Member Selector (multi-select, reuses shared Member data)
     if (showMemberSelector) {
         ExpenseMemberSelectorDialog(
             members = AppState.members,
-            selectedMember = selectedMember,
-            onMemberSelected = { selectedMember = it },
+            selectedMembers = selectedMembers,
             onDismiss = { showMemberSelector = false }
         )
     }
 }
 
-// =================== EXPENSE MEMBER SELECTOR (Single-Select) ===================
+// =================== EXPENSE MEMBER SELECTOR (Multi-Select) ===================
 @Composable
 fun ExpenseMemberSelectorDialog(
     members: List<Member>,
-    selectedMember: Member?,
-    onMemberSelected: (Member?) -> Unit,
+    selectedMembers: MutableList<Member>,
     onDismiss: () -> Unit
 ) {
     var showAdd by remember { mutableStateOf(false) }
@@ -1213,7 +1327,7 @@ fun ExpenseMemberSelectorDialog(
             Column(
                 Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 200.dp, max = 450.dp)
+                    .heightIn(min = 200.dp, max = 500.dp)
                     .padding(top = 8.dp)
             ) {
                 // Header
@@ -1222,13 +1336,24 @@ fun ExpenseMemberSelectorDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        "SELECT\nMEMBER",
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextDark,
-                        fontSize = 16.sp,
-                        lineHeight = 18.sp
-                    )
+                    Column {
+                        Text(
+                            "SELECT\nMEMBERS",
+                            fontWeight = FontWeight.ExtraBold,
+                            color = TextDark,
+                            fontSize = 16.sp,
+                            lineHeight = 18.sp
+                        )
+                        if (selectedMembers.isNotEmpty()) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "${selectedMembers.size} selected",
+                                fontSize = 11.sp,
+                                color = BrownDark,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                     Surface(
                         onClick = { showAdd = true },
                         shape = CircleShape,
@@ -1242,50 +1367,6 @@ fun ExpenseMemberSelectorDialog(
 
                 Spacer(Modifier.height(20.dp))
 
-                // "None" option
-                Surface(
-                    Modifier.fillMaxWidth().bouncyClick {
-                        onMemberSelected(null)
-                        onDismiss()
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    color = CardWhite,
-                    border = BorderStroke(1.dp, if (selectedMember == null) BrownDark else TextLight)
-                ) {
-                    Row(
-                        Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            Modifier
-                                .size(24.dp)
-                                .clip(CircleShape)
-                                .background(if (selectedMember == null) BrownDark else CardWhite)
-                                .border(
-                                    1.dp,
-                                    if (selectedMember == null) BrownDark else TextLight,
-                                    CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (selectedMember == null) {
-                                Icon(Icons.Default.Check, null, tint = CardWhite, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                        Spacer(Modifier.width(14.dp))
-                        Box(
-                            Modifier.size(32.dp).clip(CircleShape).background(FieldBg),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Outlined.Person, null, tint = TextGrey, modifier = Modifier.size(18.dp))
-                        }
-                        Spacer(Modifier.width(14.dp))
-                        Text("Personal (no member)", color = TextGrey, fontSize = 14.sp)
-                    }
-                }
-
-                Spacer(Modifier.height(10.dp))
-
                 // Members List
                 if (members.isEmpty()) {
                     Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
@@ -1297,11 +1378,11 @@ fun ExpenseMemberSelectorDialog(
                         modifier = Modifier.weight(1f, false)
                     ) {
                         items(members) { member ->
-                            val isSel = selectedMember?.id == member.id
+                            val isSel = selectedMembers.any { it.id == member.id }
                             Surface(
                                 Modifier.fillMaxWidth().bouncyClick {
-                                    onMemberSelected(member)
-                                    onDismiss()
+                                    if (isSel) selectedMembers.removeAll { it.id == member.id }
+                                    else selectedMembers.add(member)
                                 },
                                 shape = RoundedCornerShape(12.dp),
                                 color = CardWhite,
@@ -1347,12 +1428,24 @@ fun ExpenseMemberSelectorDialog(
                     }
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(20.dp))
 
-                // Cancel
+                // Actions
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onDismiss) {
-                        Text("cancel", color = TextDark, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    TextButton(onClick = {
+                        selectedMembers.clear()
+                        onDismiss()
+                    }) {
+                        Text("clear all", color = TextGrey, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    Button(
+                        onClick = onDismiss,
+                        shape = RoundedCornerShape(20.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BrownDark),
+                        contentPadding = PaddingValues(horizontal = 32.dp)
+                    ) {
+                        Text("done", color = CardWhite, fontSize = 14.sp)
                     }
                 }
             }
@@ -1363,7 +1456,7 @@ fun ExpenseMemberSelectorDialog(
         AddMemberDialog(
             onDismiss = { showAdd = false },
             onMemberAdded = { newMember ->
-                onMemberSelected(newMember)
+                selectedMembers.add(newMember)
             }
         )
     }
