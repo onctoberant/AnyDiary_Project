@@ -45,13 +45,13 @@ AnyDiary เป็นแอปไดอารี่ส่วนตัวที�
 - Badge สถานะ: `Today`, `Upcoming`, `Overdue`, `Completed`
 - ขีดฆ่าข้อความสำหรับรายการที่เสร็จแล้ว
 
-### การแจ้งเตือนอัจฉริยะ (Smart Notifications)
+### Notifications
 - ตรวจจับอัตโนมัติสำหรับงานที่เลยกำหนดและงานที่ครบกำหนดวันนี้
 - ตัวนับ badge บน tab แจ้งเตือนใน bottom navigation
 - ปุ่ม "Mark as Done" ได้โดยตรงจากการ์ดแจ้งเตือน
 - แยกสีชัดเจน: แดงสำหรับเลยกำหนด, ฟ้าสำหรับครบกำหนดวันนี้
 
-### การออกแบบและ UX
+### Design & UX
 - **พื้นหลัง warm cream** พร้อมเงาการ์ดแบบนุ่มนวล
 - **Bouncy click animation** สำหรับองค์ประกอบที่กดได้
 - ใช้ **Material 3** components พร้อมธีมโทนอุ่นที่กำหนดเอง
@@ -60,7 +60,7 @@ AnyDiary เป็นแอปไดอารี่ส่วนตัวที�
 
 ---
 
-## เทคโนโลยีที่ใช้
+## Technology
 
 | หมวดหมู่ | เทคโนโลยี | รายละเอียด |
 |---|---|---|
@@ -77,7 +77,7 @@ AnyDiary เป็นแอปไดอารี่ส่วนตัวที�
 
 ---
 
-## โครงสร้างโปรเจ็กต์
+## Project structure
 
 ```
 app/src/main/java/com/example/anydiaryproject/
@@ -102,9 +102,9 @@ app/src/main/java/com/example/anydiaryproject/
 
 ---
 
-## ระบบออกแบบ (Design System)
+## Design System
 
-### ชุดสี (Color Palette)
+### Color Palette
 
 | Token | Hex | การใช้งาน |
 |---|---|---|
@@ -126,15 +126,9 @@ app/src/main/java/com/example/anydiaryproject/
 | `TextGrey` | `#8C8C8C` | ข้อความรอง |
 | `FieldBg` | `#F5F2EC` | พื้นหลังช่อง input |
 
-### หลักการออกแบบ
-- **มุมโค้ง**: 20dp สำหรับการ์ด, 24dp สำหรับ dialog, 12dp สำหรับปุ่ม
-- **เงาอ่อนนุ่ม**: `cardShadow()` ด้วยสี BrownDark แบบ transparent
-- **Bouncy Click**: ย่อ 0.96x เมื่อกด (tween 80ms)
-- **Typography**: หัวข้อตัวหนา (16sp), เนื้อหา (14sp), caption (11sp)
-
 ---
 
-## โมเดลข้อมูล (Data Models)
+## Data Models
 
 ### Member (สมาชิก)
 ```kotlin
@@ -181,9 +175,9 @@ data class Todo(
 
 ---
 
-## เอกสารประกอบ (Documentation)
+## Documentation
 
-### สถาปัตยกรรมแอป (App Architecture)
+### App Architecture
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -241,14 +235,14 @@ data class Todo(
 └──────────────────────────────────────────────────┘
 ```
 
-### การไหลของข้อมูล (Data Flow)
+### Data Flow
 
 1. **เริ่มต้นแอป**: `MainActivity.onCreate()` → `AppState.init(context)` → `loadData()` อ่านข้อมูลจาก SharedPreferences
 2. **สร้างข้อมูลใหม่**: User กดปุ่ม + → แสดง Dialog → กรอกข้อมูล → กด Save → `AppState.addXxx()` → เพิ่มลง `mutableStateListOf` → `saveData()` → Compose recompose อัตโนมัติ
 3. **ลบข้อมูล**: User กดปุ่มลบ → `AppState.deleteXxx()` → ลบออกจาก list → `saveData()` → UI อัปเดตอัตโนมัติ
 4. **การจัดเก็บรูปภาพ**: เลือกรูปจาก Photo Picker → คัดลอกไฟล์ลง `context.filesDir` → บันทึก URI แบบ `file://...` เพื่อให้ persistence ข้ามเซสชัน
 
-### การจัดการสมาชิก (Member Management)
+### Member Management
 
 สมาชิก (`Member`) เป็นข้อมูลที่ **ใช้ร่วมกัน** ระหว่างทุกฟีเจอร์:
 - **Daily Memory**: เลือกสมาชิกหลายคนเพื่อแท็กในโพสต์
