@@ -322,6 +322,26 @@ data class Todo(
 - `androidx.activity:activity-compose` — Activity integration กับ Compose
 
 ---
+## Application screenshot
+- Welcome Page
+<img width="384" height="862" alt="image" src="https://github.com/user-attachments/assets/5c13c33f-f151-496d-987f-8690d6d8931b" />
+
+- Home Page (Diary Mode)
+<img width="385" height="862" alt="image" src="https://github.com/user-attachments/assets/3126490c-a9a2-4664-82cc-729d2480e65d" />
+
+- Home Page (Expense Mode)
+<img width="387" height="859" alt="image" src="https://github.com/user-attachments/assets/90ad9f57-1f68-46b9-aae6-a16414f19f07" />
+
+- Calendar Page
+<img width="385" height="858" alt="image" src="https://github.com/user-attachments/assets/47856182-2a65-4bac-bd7f-2e00465a7275" />
+
+- To do list Page
+<img width="385" height="860" alt="image" src="https://github.com/user-attachments/assets/9c278401-b265-4970-99b1-c71977bfcae3" />
+
+- Notication Page
+<img width="382" height="860" alt="image" src="https://github.com/user-attachments/assets/9c9dcdf2-4b7f-4652-b9a0-a17b790f0fcb" />
+
+----
 
 ## Figma Design
 
