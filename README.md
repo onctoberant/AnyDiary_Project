@@ -294,34 +294,6 @@ data class Todo(
 | `AppLogo` | UIUtils.kt | โลโก้แอปด้านบน |
 
 ---
-
-## เริ่มต้นใช้งาน
-
-### สิ่งที่ต้องมี
-- **Android Studio** (Arctic Fox ขึ้นไป)
-- **JDK 17** หรือสูงกว่า
-- อุปกรณ์ Android หรือ Emulator ที่ใช้ **API 30+** (Android 11)
-
-### ขั้นตอนการติดตั้ง
-1. Clone repository:
-   ```bash
-   git clone <repository-url>
-   ```
-2. เปิดโปรเจ็กต์ใน **Android Studio**
-3. รอ Gradle sync ให้เสร็จสมบูรณ์
-4. รันโมดูล `app` บน emulator หรืออุปกรณ์จริง
-5. แตะปุ่ม **ลูกศร (→)** บน Splash Screen เพื่อเริ่มใช้งาน!
-
-### Dependencies (ใน `build.gradle.kts`)
-- `androidx.compose.*` — Jetpack Compose UI
-- `androidx.material3:material3` — Material 3 components
-- `androidx.compose.material:material-icons-extended` — ไอคอนเพิ่มเติม
-- `io.coil-kt:coil-compose` — โหลดรูปภาพ
-- `com.google.code.gson:gson` — JSON serialization
-- `androidx.navigation:navigation-compose` — Navigation (import ไว้แต่ routing เป็นแบบ state-based)
-- `androidx.activity:activity-compose` — Activity integration กับ Compose
-
----
 ## Application screenshot
 - Welcome Page
 <img width="384" height="862" alt="image" src="https://github.com/user-attachments/assets/5c13c33f-f151-496d-987f-8690d6d8931b" />
@@ -350,3 +322,31 @@ Link: [Figma — Mobile Application Design](https://www.figma.com/design/YIdboCg
 <img width="1405" height="505" alt="image" src="https://github.com/user-attachments/assets/a4a3f59e-4ad3-476d-bafc-aa71d62e5813" />
 <img width="956" height="505" alt="image" src="https://github.com/user-attachments/assets/c022d26d-47d0-4e96-8efb-3351effa3426" />
 <img width="1142" height="496" alt="image" src="https://github.com/user-attachments/assets/51d6919f-aac0-424f-b126-70456aa99921" />
+
+---
+
+## เริ่มต้นใช้งาน
+
+### สิ่งที่ต้องมี
+- **Android Studio** (Arctic Fox ขึ้นไป)
+- **JDK 17** หรือสูงกว่า
+- อุปกรณ์ Android หรือ Emulator ที่ใช้ **API 30+** (Android 11)
+
+### ขั้นตอนการติดตั้ง
+1. Clone repository:
+   ```bash
+   git clone <repository-url>
+   ```
+2. เปิดโปรเจ็กต์ใน **Android Studio**
+3. รอ Gradle sync ให้เสร็จสมบูรณ์
+4. รันโมดูล `app` บน emulator หรืออุปกรณ์จริง
+5. แตะปุ่ม **ลูกศร (→)** บน Splash Screen เพื่อเริ่มใช้งาน!
+
+### Dependencies (ใน `build.gradle.kts`)
+- `androidx.compose.*` — Jetpack Compose UI
+- `androidx.material3:material3` — Material 3 components
+- `androidx.compose.material:material-icons-extended` — ไอคอนเพิ่มเติม
+- `io.coil-kt:coil-compose` — โหลดรูปภาพ
+- `com.google.code.gson:gson` — JSON serialization
+- `androidx.navigation:navigation-compose` — Navigation (import ไว้แต่ routing เป็นแบบ state-based)
+- `androidx.activity:activity-compose` — Activity integration กับ Compose
